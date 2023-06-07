@@ -1,0 +1,9 @@
+name: DogCore
+version: 1.0.0
+main: net.dumbdogdiner.dogcore.DogCorePlugin
+description: Core plugin for Dumb Dog Diner
+author: spazzylemons
+website: https://dumbdogdiner.net/
+api-version: 1.19
+depend:
+  - CommandAPI
