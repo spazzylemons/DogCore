@@ -25,6 +25,9 @@ dependencies {
     implementation("org.postgresql:postgresql:42.5.4")
     implementation("org.jetbrains.exposed:exposed-core:0.41.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+
+    // permissions
+    compileOnly("net.luckperms:api:5.4")
 }
 
 tasks {
