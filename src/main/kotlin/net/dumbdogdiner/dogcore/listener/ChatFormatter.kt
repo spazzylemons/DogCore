@@ -9,7 +9,7 @@ import org.bukkit.event.Listener
 object ChatFormatter : Listener {
     @EventHandler
     fun onChat(event: AsyncChatEvent) {
-        val player = DbPlayer(event.player.uniqueId)
+        val player = DbPlayer.lookup(event.player.uniqueId) ?: return
         if (player.isMuted) {
             // if player is muted, tell them that, and don't send the message
             event.isCancelled = true

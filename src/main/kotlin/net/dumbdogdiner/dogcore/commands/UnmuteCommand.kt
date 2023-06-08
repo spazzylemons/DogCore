@@ -2,15 +2,20 @@ package net.dumbdogdiner.dogcore.commands
 
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.commandAPICommand
-import dev.jorel.commandapi.kotlindsl.playerArgument
+import dev.jorel.commandapi.kotlindsl.offlinePlayerArgument
 import net.dumbdogdiner.dogcore.db.DbPlayer
-import org.bukkit.entity.Player
+import net.kyori.adventure.text.Component
+import org.bukkit.OfflinePlayer
 
 fun unmuteCommand() = commandAPICommand("unmute") {
-    playerArgument("player")
+    offlinePlayerArgument("player")
 
-    anyExecutor { _, args ->
-        val player = DbPlayer((args["player"] as Player).uniqueId)
+    anyExecutor { sender, args ->
+        val player = DbPlayer.lookup(args["player"] as OfflinePlayer)
+        if (player == null) {
+            sender.sendMessage(Component.text("Player has no records in the server."))
+            return@anyExecutor
+        }
         player.unmute()
     }
 }

@@ -1,9 +1,14 @@
 package net.dumbdogdiner.dogcore
 
+import net.dumbdogdiner.dogcore.commands.balCommand
+import net.dumbdogdiner.dogcore.commands.balTopCommand
+import net.dumbdogdiner.dogcore.commands.ecoCommand
 import net.dumbdogdiner.dogcore.commands.muteCommand
+import net.dumbdogdiner.dogcore.commands.payCommand
 import net.dumbdogdiner.dogcore.commands.unmuteCommand
 import net.dumbdogdiner.dogcore.db.Db
 import net.dumbdogdiner.dogcore.listener.ChatFormatter
+import net.dumbdogdiner.dogcore.listener.PlayerRegistrar
 import org.bukkit.plugin.java.JavaPlugin
 
 class DogCorePlugin : JavaPlugin() {
@@ -12,10 +17,16 @@ class DogCorePlugin : JavaPlugin() {
 
         Db.init()
 
+        balCommand()
+        balTopCommand()
+        ecoCommand()
         muteCommand()
+        payCommand()
         unmuteCommand()
 
         server.pluginManager.registerEvents(ChatFormatter, this)
+        server.pluginManager.registerEvents(PlayerRegistrar, this)
+
         logger.info("doggy time")
     }
 

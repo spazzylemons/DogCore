@@ -9,6 +9,7 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.codemc.org/repository/maven-public/")
 }
@@ -16,12 +17,17 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
 
+    // commandapi
     compileOnly("dev.jorel:commandapi-bukkit-core:9.0.1")
     implementation("dev.jorel:commandapi-bukkit-kotlin:9.0.1")
 
+    // database
     implementation("org.postgresql:postgresql:42.5.4")
     implementation("org.jetbrains.exposed:exposed-core:0.41.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+
+    // economy
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
 }
 
 tasks {

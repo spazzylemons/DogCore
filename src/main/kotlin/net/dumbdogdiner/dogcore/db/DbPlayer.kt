@@ -2,25 +2,19 @@ package net.dumbdogdiner.dogcore.db
 
 import net.dumbdogdiner.dogcore.db.tables.Mutes
 import net.dumbdogdiner.dogcore.db.tables.Players
+import org.bukkit.OfflinePlayer
+import org.bukkit.entity.Player
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import java.util.UUID
 import kotlin.time.Duration
 
-class DbPlayer(private val uuid: UUID) {
-    init {
-        Db.transaction {
-            // ensure an entry exists for us in the players DB before continuing
-            if (Players.select { Players.uniqueId eq uuid }.empty()) {
-                Players.insert {
-                    it[uniqueId] = uuid
-                }
-            }
-        }
-    }
-
+class DbPlayer private constructor(private val uuid: UUID) {
     val isMuted
         get() = Db.transaction {
             // does an entry exist in the mutes table?
@@ -57,9 +51,95 @@ class DbPlayer(private val uuid: UUID) {
     /**
      * Unmute this player.
      */
-    fun unmute() {
-        Db.transaction {
-            Mutes.deleteWhere { playerId eq uuid }
+    fun unmute() = Db.transaction {
+        Mutes.deleteWhere { playerId eq uuid }
+    }
+
+    var balance
+        get() = Db.transaction {
+            Players.select { Players.uniqueId eq uuid }.first()[Players.balance]
+        }
+        set(value) = Db.transaction {
+            Players.update({ Players.uniqueId eq uuid }) {
+                it[balance] = value
+            }
+        }
+
+    /**
+     * Give or take money from this player.
+     * Allows entering debt.
+     * Fails if balance would overflow.
+     */
+    fun give(amount: Long) = Db.transaction {
+        // How much do we currently have?
+        val newBalance = balance.addWithoutOverflow(amount)
+        if (newBalance != null) {
+            balance = newBalance
+            true
+        } else {
+            false
+        }
+    }
+
+    /**
+     * Pay another player.
+     * Does not allow entering debt, but does allow paying someone who is in debt.
+     * Fails if there are insufficient funds, or if balance would overflow.
+     */
+    fun pay(other: DbPlayer, amount: Long) = Db.transaction {
+        // don't allow paying negatives
+        if (amount < 0L) return@transaction false
+
+        val ourNewBalance = balance.addWithoutOverflow(-amount)
+        if (ourNewBalance == null || ourNewBalance < 0L) return@transaction false
+        val theirNewBalance = other.balance.addWithoutOverflow(amount) ?: return@transaction false
+        // all good to run transaction
+        balance = ourNewBalance
+        other.balance = theirNewBalance
+        true
+    }
+
+    /** The username of this player. */
+    val username
+        get() = Db.transaction { Players.select { Players.uniqueId eq uuid }.first()[Players.username] }
+
+    companion object {
+        private const val PAGE_SIZE = 5
+
+        fun lookup(uuid: UUID) = Db.transaction {
+            if (!Players.select { Players.uniqueId eq uuid }.empty()) {
+                DbPlayer(uuid)
+            } else {
+                null
+            }
+        }
+
+        fun register(player: Player) = Db.transaction {
+            val uuid = player.uniqueId
+            val name = player.name
+            if (Players.select { Players.uniqueId eq uuid }.empty()) {
+                Players.insert {
+                    it[uniqueId] = uuid
+                    it[username] = name
+                }
+                true
+            } else {
+                // Ensure we update the existing username of this player, in case it changed.
+                Players.update({ Players.uniqueId eq uuid }) {
+                    it[username] = name
+                }
+                false
+            }
+        }
+
+        fun lookup(offlinePlayer: OfflinePlayer) = lookup(offlinePlayer.uniqueId)
+
+        /** Page index starts at 1 */
+        fun top(page: Int) = Db.transaction {
+            Players.selectAll()
+                .orderBy(Players.balance, SortOrder.DESC)
+                .limit(PAGE_SIZE, (page - 1).toLong() * PAGE_SIZE)
+                .map { it[Players.username] to it[Players.balance] }
         }
     }
 }
