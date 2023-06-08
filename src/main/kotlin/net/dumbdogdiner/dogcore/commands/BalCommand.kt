@@ -11,6 +11,7 @@ import org.bukkit.entity.Player
 fun balCommand() = commandAPICommand("bal") {
     withAliases("balance")
     offlinePlayerArgument("player", optional = true)
+    withPermission("dogcore.bal")
 
     anyExecutor { sender, args ->
         val p = args["player"] as OfflinePlayer?

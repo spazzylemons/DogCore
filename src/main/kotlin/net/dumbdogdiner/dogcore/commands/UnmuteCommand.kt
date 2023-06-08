@@ -8,6 +8,8 @@ import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 
 fun unmuteCommand() = commandAPICommand("unmute") {
+    withPermission("dogcore.unmute")
+
     offlinePlayerArgument("player")
 
     anyExecutor { sender, args ->

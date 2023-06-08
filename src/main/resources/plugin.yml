@@ -7,3 +7,22 @@ website: https://dumbdogdiner.net/
 api-version: 1.19
 depend:
   - CommandAPI
+permissions:
+  dogcore.bal:
+    description: "Allows using /bal command."
+    default: true
+  dogcore.baltop:
+    description: "Allows seeing the players with the highest balance."
+    default: true
+  dogcore.eco:
+    description: "Allows editing the balances of other players."
+    default: false
+  dogcore.mute:
+    description: "Allows muting other players."
+    default: false
+  dogcore.pay:
+    description: "Allows giving money to other players."
+    default: true
+  dogcore.unmute:
+    description: "Allows unmuting other players."
+    default: false

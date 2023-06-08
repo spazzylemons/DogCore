@@ -10,6 +10,8 @@ import org.bukkit.OfflinePlayer
 import kotlin.time.Duration
 
 fun muteCommand() = commandAPICommand("mute") {
+    withPermission("dogcore.mute")
+
     offlinePlayerArgument("player")
     greedyStringArgument("duration", optional = true)
 

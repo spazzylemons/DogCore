@@ -9,6 +9,8 @@ import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 
 fun payCommand() = commandAPICommand("pay") {
+    withPermission("dogcore.pay")
+
     offlinePlayerArgument("player")
     longArgument("amount", min = 0)
 

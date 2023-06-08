@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component
 
 fun balTopCommand() = commandAPICommand("baltop") {
     withAliases("balancetop")
+    withPermission("dogcore.baltop")
     integerArgument("page", optional = true, min = 1)
 
     anyExecutor { sender, args ->

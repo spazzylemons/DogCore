@@ -11,6 +11,8 @@ import org.bukkit.OfflinePlayer
 
 fun ecoCommand() = commandAPICommand("eco") {
     withAliases("economy")
+    withPermission("dogcore.eco")
+
     multiLiteralArgument("give", "take", "set")
     offlinePlayerArgument("player")
     longArgument("amount", min = 0)
