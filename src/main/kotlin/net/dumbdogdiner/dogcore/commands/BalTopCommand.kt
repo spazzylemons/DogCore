@@ -3,12 +3,13 @@ package net.dumbdogdiner.dogcore.commands
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.commandAPICommand
 import dev.jorel.commandapi.kotlindsl.integerArgument
+import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.db.DbPlayer
 import net.kyori.adventure.text.Component
 
 fun balTopCommand() = commandAPICommand("baltop") {
     withAliases("balancetop")
-    withPermission("dogcore.baltop")
+    withPermission(Permissions.ECO)
     integerArgument("page", optional = true, min = 1)
 
     anyExecutor { sender, args ->

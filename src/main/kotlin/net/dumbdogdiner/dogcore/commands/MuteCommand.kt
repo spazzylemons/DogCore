@@ -4,13 +4,14 @@ import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.commandAPICommand
 import dev.jorel.commandapi.kotlindsl.greedyStringArgument
 import dev.jorel.commandapi.kotlindsl.offlinePlayerArgument
+import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.db.DbPlayer
 import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 import kotlin.time.Duration
 
 fun muteCommand() = commandAPICommand("mute") {
-    withPermission("dogcore.mute")
+    withPermission(Permissions.MUTE)
 
     offlinePlayerArgument("player")
     greedyStringArgument("duration", optional = true)

@@ -4,12 +4,13 @@ import dev.jorel.commandapi.kotlindsl.commandAPICommand
 import dev.jorel.commandapi.kotlindsl.longArgument
 import dev.jorel.commandapi.kotlindsl.offlinePlayerArgument
 import dev.jorel.commandapi.kotlindsl.playerExecutor
+import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.db.DbPlayer
 import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 
 fun payCommand() = commandAPICommand("pay") {
-    withPermission("dogcore.pay")
+    withPermission(Permissions.ECO)
 
     offlinePlayerArgument("player")
     longArgument("amount", min = 0)
