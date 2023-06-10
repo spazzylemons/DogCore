@@ -10,11 +10,11 @@ import org.jetbrains.exposed.sql.Transaction
 object Db {
     private lateinit var db: Database
 
-    fun init() {
-        val database = DogCorePlugin.INSTANCE.getConfigString("db.database")
-        val port = DogCorePlugin.INSTANCE.getConfigString("db.port")
-        val username = DogCorePlugin.INSTANCE.getConfigString("db.username")
-        val password = DogCorePlugin.INSTANCE.getConfigString("db.password")
+    fun init(plugin: DogCorePlugin) {
+        val database = plugin.getConfigString("db.database")
+        val port = plugin.getConfigString("db.port")
+        val username = plugin.getConfigString("db.username")
+        val password = plugin.getConfigString("db.password")
 
         db = Database.connect(
             url = "jdbc:postgresql://localhost:$port/$database",
