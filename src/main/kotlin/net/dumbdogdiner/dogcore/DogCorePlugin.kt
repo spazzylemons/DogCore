@@ -4,6 +4,7 @@ import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.commands.balCommand
 import net.dumbdogdiner.dogcore.commands.balTopCommand
 import net.dumbdogdiner.dogcore.commands.ecoCommand
+import net.dumbdogdiner.dogcore.commands.invSeeCommand
 import net.dumbdogdiner.dogcore.commands.muteCommand
 import net.dumbdogdiner.dogcore.commands.payCommand
 import net.dumbdogdiner.dogcore.commands.unmuteCommand
@@ -18,6 +19,7 @@ class DogCorePlugin : JavaPlugin() {
         balCommand()
         balTopCommand()
         ecoCommand()
+        invSeeCommand()
         muteCommand()
         payCommand()
         unmuteCommand()

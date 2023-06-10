@@ -42,7 +42,7 @@ object NameFormatter {
         val color = metadata?.getMetaValue("color")?.let { parseColor(it) } ?: NamedTextColor.GRAY
         return if (rank != null) {
             Component.textOfChildren(
-                Component.text(rank, color),
+                Component.text("[$rank]", color),
                 Component.space(),
                 Component.text(name, color)
             )
