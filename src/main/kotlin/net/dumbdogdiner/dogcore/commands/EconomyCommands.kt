@@ -1,12 +1,14 @@
 package net.dumbdogdiner.dogcore.commands
 
 import net.dumbdogdiner.dogcore.Permissions
-import net.dumbdogdiner.dogcore.db.DbPlayer
+import net.dumbdogdiner.dogcore.db.User
+import net.dumbdogdiner.dogcore.messages.Messages
 import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import revxrsal.commands.annotation.Command
+import revxrsal.commands.annotation.Default
 import revxrsal.commands.annotation.Optional
 import revxrsal.commands.annotation.Range
 import revxrsal.commands.annotation.Subcommand
@@ -20,22 +22,15 @@ object EconomyCommands {
         @Optional
         player: OfflinePlayer?
     ) {
-        val p = player
-            ?: sender as? Player
-            ?: run {
-                sender.sendMessage(Component.text("Player argument needed in this context."))
-                return
-            }
-        val dbPlayer = DbPlayer.lookup(p)
-        if (dbPlayer == null) {
-            sender.sendMessage(Component.text("Player has no records in the server."))
-            return
-        }
-        val balance = dbPlayer.balance
-        if (p == sender) {
-            sender.sendMessage(Component.text("You have $balance bean(s)."))
+        val playerToLookup = player ?: (sender as? Player)
+            ?: commandError(Messages["error.playerNeeded"])
+
+        val user = User.lookupCommand(playerToLookup)
+        val balance = user.balance
+        if (playerToLookup == sender) {
+            sender.sendMessage(Messages["commands.balance.query", Component.text(balance)])
         } else {
-            sender.sendMessage(Component.text("${dbPlayer.username} has $balance bean(s)."))
+            sender.sendMessage(Messages["commands.balance.query.other", user.formattedName(), Component.text(balance)])
         }
     }
 
@@ -43,12 +38,12 @@ object EconomyCommands {
     @CommandPermission(Permissions.ECO)
     fun balanceTop(
         sender: CommandSender,
-        @Optional
+        @Default("1")
         @Range(min = 1.0)
-        page: Int?
+        page: Int
     ) {
-        for ((username, balance) in DbPlayer.top(page ?: 1)) {
-            sender.sendMessage(Component.text("$username -> $balance"))
+        for ((username, amount) in User.top(page)) {
+            sender.sendMessage(Messages["commands.balancetop.entry", username, Component.text(amount)])
         }
     }
 
@@ -60,29 +55,21 @@ object EconomyCommands {
         @Range(min = 1.0)
         amount: Long
     ) {
-        val s = DbPlayer.lookup(sender) ?: return
-        val p = DbPlayer.lookup(player)
-            ?: run {
-                sender.sendMessage(Component.text("Cannot pay a player who has never joined."))
-                return
-            }
-        if (s.pay(p, amount)) {
-            sender.sendMessage(Component.text("You paid $amount bean(s) to ${p.username}."))
+        val from = User.lookupCommand(sender)
+        val to = User.lookupCommand(player)
+        if (from.pay(to, amount)) {
+            sender.sendMessage(Messages["commands.pay.success", Component.text(amount), to.formattedName()])
         } else {
-            sender.sendMessage(Component.text("Could not complete the transaction."))
+            sender.sendMessage(Messages["error.failedTransaction"])
         }
     }
 
-    private fun economyHelper(sender: CommandSender, player: OfflinePlayer, action: (DbPlayer) -> Boolean) {
-        val p = DbPlayer.lookup(player)
-            ?: run {
-                sender.sendMessage(Component.text("Player argument needed in this context."))
-                return
-            }
-        if (action(p)) {
-            sender.sendMessage(Component.text("The balance was updated"))
+    private fun economyHelper(sender: CommandSender, player: OfflinePlayer, action: (User) -> Boolean) {
+        val user = User.lookupCommand(player)
+        if (action(user)) {
+            sender.sendMessage(Messages["commands.economy.success"])
         } else {
-            sender.sendMessage(Component.text("The balance would overflow, so it was not updated."))
+            sender.sendMessage(Messages["error.failedTransaction"])
         }
     }
 

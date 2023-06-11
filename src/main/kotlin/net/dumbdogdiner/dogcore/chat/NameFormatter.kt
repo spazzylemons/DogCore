@@ -36,10 +36,10 @@ object NameFormatter {
         }
     }
 
-    private suspend fun formatUsername(uuid: UUID, name: String): Component {
+    suspend fun formatUsername(uuid: UUID, name: String): Component {
         val metadata = lp.groupManager.getGroup(getOrLoadUser(uuid, name).primaryGroup)?.cachedData?.metaData
         val rank = metadata?.getMetaValue("rank")
-        val color = metadata?.getMetaValue("color")?.let { parseColor(it) } ?: NamedTextColor.GRAY
+        val color = metadata?.getMetaValue("color")?.let { parseColor(it) } ?: NamedTextColor.WHITE
         return if (rank != null) {
             Component.textOfChildren(
                 Component.text("[$rank]", color),

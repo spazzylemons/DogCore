@@ -2,7 +2,7 @@ package net.dumbdogdiner.dogcore.db
 
 import net.dumbdogdiner.dogcore.DogCorePlugin
 import net.dumbdogdiner.dogcore.db.tables.Mutes
-import net.dumbdogdiner.dogcore.db.tables.Players
+import net.dumbdogdiner.dogcore.db.tables.Users
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
@@ -24,7 +24,7 @@ object Db {
         )
 
         transaction {
-            SchemaUtils.create(Mutes, Players)
+            SchemaUtils.create(Mutes, Users)
         }
     }
 

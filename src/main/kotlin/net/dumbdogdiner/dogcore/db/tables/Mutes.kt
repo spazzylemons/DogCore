@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Table
 
 object Mutes : Table() {
     /** The muted player. */
-    val playerId = uuid("player_id").references(Players.uniqueId)
+    val playerId = uuid("player_id").references(Users.uniqueId)
 
     /** The time when the mute expires. If null, mute is indefinite. */
     val expires = long("expires").nullable()

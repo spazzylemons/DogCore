@@ -1,7 +1,12 @@
 package net.dumbdogdiner.dogcore.db
 
+import kotlinx.coroutines.runBlocking
+import net.dumbdogdiner.dogcore.chat.NameFormatter
+import net.dumbdogdiner.dogcore.commands.commandError
 import net.dumbdogdiner.dogcore.db.tables.Mutes
-import net.dumbdogdiner.dogcore.db.tables.Players
+import net.dumbdogdiner.dogcore.db.tables.Users
+import net.dumbdogdiner.dogcore.messages.Messages
+import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.SortOrder
@@ -14,7 +19,7 @@ import org.jetbrains.exposed.sql.update
 import java.util.UUID
 import kotlin.time.Duration
 
-class DbPlayer private constructor(private val uuid: UUID) {
+class User private constructor(private val uuid: UUID) {
     val isMuted
         get() = Db.transaction {
             // does an entry exist in the mutes table?
@@ -57,10 +62,10 @@ class DbPlayer private constructor(private val uuid: UUID) {
 
     var balance
         get() = Db.transaction {
-            Players.select { Players.uniqueId eq uuid }.first()[Players.balance]
+            Users.select { Users.uniqueId eq uuid }.first()[Users.balance]
         }
         set(value) = Db.transaction {
-            Players.update({ Players.uniqueId eq uuid }) {
+            Users.update({ Users.uniqueId eq uuid }) {
                 it[balance] = value
             }
         }
@@ -86,7 +91,7 @@ class DbPlayer private constructor(private val uuid: UUID) {
      * Does not allow entering debt, but does allow paying someone who is in debt.
      * Fails if there are insufficient funds, or if balance would overflow.
      */
-    fun pay(other: DbPlayer, amount: Long) = Db.transaction {
+    fun pay(other: User, amount: Long) = Db.transaction {
         // don't allow paying ourselves, or we'd generate infinite money
         if (other.uuid == uuid) return@transaction false
         // don't allow paying negatives
@@ -103,14 +108,27 @@ class DbPlayer private constructor(private val uuid: UUID) {
 
     /** The username of this player. */
     val username
-        get() = Db.transaction { Players.select { Players.uniqueId eq uuid }.first()[Players.username] }
+        get() = Db.transaction { Users.select { Users.uniqueId eq uuid }.first()[Users.username] }
+
+    var socialSpy
+        get() = Db.transaction { Users.select { Users.uniqueId eq uuid }.first()[Users.socialSpy] }
+        set(value) = Db.transaction {
+            Users.update({ Users.uniqueId eq uuid }) {
+                it[socialSpy] = value
+            }
+        }
+
+    // TODO this shouldn't be blocking
+    fun formattedName() = runBlocking {
+        NameFormatter.formatUsername(uuid, username)
+    }
 
     companion object {
         private const val PAGE_SIZE = 5
 
         fun lookup(uuid: UUID) = Db.transaction {
-            if (!Players.select { Players.uniqueId eq uuid }.empty()) {
-                DbPlayer(uuid)
+            if (!Users.select { Users.uniqueId eq uuid }.empty()) {
+                User(uuid)
             } else {
                 null
             }
@@ -119,15 +137,15 @@ class DbPlayer private constructor(private val uuid: UUID) {
         fun register(player: Player) = Db.transaction {
             val uuid = player.uniqueId
             val name = player.name
-            if (Players.select { Players.uniqueId eq uuid }.empty()) {
-                Players.insert {
+            if (Users.select { Users.uniqueId eq uuid }.empty()) {
+                Users.insert {
                     it[uniqueId] = uuid
                     it[username] = name
                 }
                 true
             } else {
                 // Ensure we update the existing username of this player, in case it changed.
-                Players.update({ Players.uniqueId eq uuid }) {
+                Users.update({ Users.uniqueId eq uuid }) {
                     it[username] = name
                 }
                 false
@@ -136,12 +154,23 @@ class DbPlayer private constructor(private val uuid: UUID) {
 
         fun lookup(offlinePlayer: OfflinePlayer) = lookup(offlinePlayer.uniqueId)
 
+        fun lookupCommand(offlinePlayer: OfflinePlayer) = lookup(offlinePlayer)
+            ?: commandError(Messages["error.playerNotFound"])
+
         /** Page index starts at 1 */
         fun top(page: Int) = Db.transaction {
-            Players.selectAll()
-                .orderBy(Players.balance, SortOrder.DESC)
+            Users.selectAll()
+                .orderBy(Users.balance, SortOrder.DESC)
                 .limit(PAGE_SIZE, (page - 1).toLong() * PAGE_SIZE)
-                .map { it[Players.username] to it[Players.balance] }
+                .map { User(it[Users.uniqueId]).formattedName() to it[Users.balance] }
+        }
+
+        fun spies() = Db.transaction {
+            Users.select { Users.socialSpy eq true }
+                .asSequence()
+                .map { Bukkit.getPlayer(it[Users.uniqueId]) }
+                .filterNotNull()
+                .toList()
         }
     }
 }

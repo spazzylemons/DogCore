@@ -4,6 +4,7 @@ import com.mojang.brigadier.LiteralMessage
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.commands.EconomyCommands
+import net.dumbdogdiner.dogcore.commands.FormattedCommandException
 import net.dumbdogdiner.dogcore.commands.MuteCommands
 import net.dumbdogdiner.dogcore.commands.SnoopCommands
 import net.dumbdogdiner.dogcore.commands.TellCommand
@@ -13,6 +14,7 @@ import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.plugin.java.JavaPlugin
 import revxrsal.commands.bukkit.BukkitCommandHandler
+import revxrsal.commands.bukkit.sender
 import kotlin.time.Duration
 
 private val COMMANDS_TO_REMOVE = arrayOf("msg")
@@ -36,6 +38,10 @@ class DogCorePlugin : JavaPlugin() {
             SnoopCommands,
             TellCommand
         )
+
+        handler.registerExceptionHandler(FormattedCommandException::class.java) { actor, e ->
+            actor.sender.sendMessage(e.msg)
+        }
 
         handler.registerBrigadier()
 
