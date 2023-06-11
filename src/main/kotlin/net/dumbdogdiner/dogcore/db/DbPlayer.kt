@@ -87,6 +87,8 @@ class DbPlayer private constructor(private val uuid: UUID) {
      * Fails if there are insufficient funds, or if balance would overflow.
      */
     fun pay(other: DbPlayer, amount: Long) = Db.transaction {
+        // don't allow paying ourselves, or we'd generate infinite money
+        if (other.uuid == uuid) return@transaction false
         // don't allow paying negatives
         if (amount < 0L) return@transaction false
 

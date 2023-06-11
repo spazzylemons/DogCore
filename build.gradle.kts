@@ -11,16 +11,15 @@ repositories {
     mavenCentral()
     maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://repo.codemc.org/repository/maven-public/")
-    maven("https://repo.dmulloy2.net/repository/public/")
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
 
-    // commandapi
-    compileOnly("dev.jorel:commandapi-bukkit-core:9.0.1")
-    implementation("dev.jorel:commandapi-bukkit-kotlin:9.0.1")
+    // commands
+    compileOnly("com.mojang:brigadier:1.0.18")
+    implementation("com.github.Revxrsal.Lamp:common:3.1.5")
+    implementation("com.github.Revxrsal.Lamp:bukkit:3.1.5")
 
     // database
     implementation("org.postgresql:postgresql:42.5.4")
@@ -38,6 +37,13 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("")
+    }
+
+    compileKotlin {
+        kotlinOptions {
+            // preserve parameter names, so that the command reflection can use them
+            javaParameters = true
+        }
     }
 }
 

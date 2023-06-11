@@ -40,6 +40,8 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         runBlocking {
             NameFormatter.updatePlayerListName(player)
         }
+        // remove access to some vanilla commands
+        plugin.removeVanillaOverrides(player)
         // announce join if new to server
         if (firstJoin) {
             plugin.server.broadcast(Component.text("Welcome to the server, ${player.name}!"))

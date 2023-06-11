@@ -6,7 +6,6 @@ author: spazzylemons
 website: https://dumbdogdiner.net/
 api-version: 1.19
 depend:
-  - CommandAPI
   - LuckPerms
 permissions:
   dogcore.eco:
@@ -17,4 +16,7 @@ permissions:
     default: op
   dogcore.mute:
     description: "Allows muting and unmuting other players."
+    default: op
+  dogcore.snoop:
+    description: "Allows spying on other players."
     default: op
