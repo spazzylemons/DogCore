@@ -1,0 +1,76 @@
+contact:
+  - <player> was popped by <block>
+
+entity-attack:
+  - <player> got pwned by <entity>
+
+entity-sweep-attack:
+  - <player> got sliced by <entity>
+
+projectile:
+  - <player> was shot by <entity>
+
+suffocation:
+  - <player> tried living in your walls
+
+fall:
+  - <player> experienced gravity
+  - <player> went splat
+
+fire:
+  - <player> got toasted
+
+fire-tick:
+  - <player> got toasted
+
+lava:
+  - <player> got too cozy in molten cheese
+
+drowning:
+  - <player> overhydrated
+
+block-explosion:
+  - <player> tried to hug a <block>
+
+entity-explosion:
+  - <player> tried to hug a <entity>
+
+void:
+  - <player> went all the way down
+
+lightning:
+  - <player> tried being a lightning rod
+  - <player> was thunderstruck
+
+starvation:
+  - <player> forgot to eat
+
+magic:
+  - <player> was killed by magic
+
+wither:
+  - <player> withered away
+
+falling-block:
+  - <player> didn't look up
+
+thorns:
+  - <player> got popped by <entity>
+
+dragon-breath:
+  - <player> got too comfy with the Dragon
+
+fly-into-wall:
+  - <player> experienced inertia
+
+hot-floor:
+  - <player> burned their beans
+
+cramming:
+  - <player> got crushed in the furpile
+
+freeze:
+  - <player> got too cool
+
+sonic-boom:
+  - <player> got Wardened
