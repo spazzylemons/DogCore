@@ -49,6 +49,7 @@ object NameFormatter {
         } else {
             Component.text(name, color)
         }
+            .insertion(name)
     }
 
     suspend fun formatUsername(player: Player) = formatUsername(player.uniqueId, player.name)
