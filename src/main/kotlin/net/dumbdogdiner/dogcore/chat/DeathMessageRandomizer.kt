@@ -14,7 +14,9 @@ class DeathMessageRandomizer(plugin: JavaPlugin) {
 
     init {
         val file = plugin.dataFolder.resolve(FILE)
-        plugin.saveResource(FILE, false)
+        if (!file.exists()) {
+            plugin.saveResource(FILE, false)
+        }
 
         val config = YamlConfiguration()
         file.reader().use {

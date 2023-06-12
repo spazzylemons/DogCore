@@ -12,7 +12,6 @@ object Messages {
     private val bundle = ResourceBundle.getBundle("messages")
 
     operator fun get(id: String, vararg fmt: Component): Component {
-        // get the JSON tree
         val mm = try {
             bundle.getString(id)
         } catch (e: MissingResourceException) {

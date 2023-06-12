@@ -7,6 +7,7 @@ import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.db.User
 import net.dumbdogdiner.dogcore.messages.Messages
+import net.dumbdogdiner.dogcore.teleport.TpaManager
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -57,6 +58,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val name = runBlocking { NameFormatter.formatUsername(event.player) }
         event.quitMessage(Messages["chat.quit", name])
+        TpaManager.removePlayer(event.player.uniqueId)
     }
 
     @EventHandler

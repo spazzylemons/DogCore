@@ -8,8 +8,10 @@ import net.dumbdogdiner.dogcore.commands.FormattedCommandException
 import net.dumbdogdiner.dogcore.commands.MuteCommands
 import net.dumbdogdiner.dogcore.commands.SnoopCommands
 import net.dumbdogdiner.dogcore.commands.TellCommand
+import net.dumbdogdiner.dogcore.commands.TpaCommands
 import net.dumbdogdiner.dogcore.db.Db
 import net.dumbdogdiner.dogcore.listener.CoreListener
+import net.dumbdogdiner.dogcore.teleport.initSafeTeleport
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.plugin.java.JavaPlugin
@@ -21,6 +23,7 @@ private val COMMANDS_TO_REMOVE = arrayOf("msg")
 
 class DogCorePlugin : JavaPlugin() {
     override fun onEnable() {
+        initSafeTeleport(this)
         Db.init(this)
 
         val handler = BukkitCommandHandler.create(this)
@@ -36,7 +39,8 @@ class DogCorePlugin : JavaPlugin() {
             EconomyCommands,
             MuteCommands,
             SnoopCommands,
-            TellCommand
+            TellCommand,
+            TpaCommands
         )
 
         handler.registerExceptionHandler(FormattedCommandException::class.java) { actor, e ->
