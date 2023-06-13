@@ -3,6 +3,8 @@ package net.dumbdogdiner.dogcore.db.tables
 import org.jetbrains.exposed.sql.Table
 
 object Users : Table() {
+    const val MAX_NICKNAME_LENGTH = 16
+
     /** The player's unique ID. */
     val uniqueId = uuid("unique_id")
 
@@ -11,6 +13,9 @@ object Users : Table() {
      * Almost always unique, but not guaranteed.
      */
     val username = varchar("username", 16)
+
+    /** The nickanme of the user. */
+    val nickname = varchar("nickname", MAX_NICKNAME_LENGTH).nullable()
 
     /** The amount of currency owned by this player. */
     val balance = long("balance").default(0)

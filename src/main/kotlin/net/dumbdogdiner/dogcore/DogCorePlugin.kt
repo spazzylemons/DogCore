@@ -6,6 +6,7 @@ import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.commands.EconomyCommands
 import net.dumbdogdiner.dogcore.commands.FormattedCommandException
 import net.dumbdogdiner.dogcore.commands.MuteCommands
+import net.dumbdogdiner.dogcore.commands.NickCommand
 import net.dumbdogdiner.dogcore.commands.SnoopCommands
 import net.dumbdogdiner.dogcore.commands.TellCommand
 import net.dumbdogdiner.dogcore.commands.TpaCommands
@@ -38,6 +39,7 @@ class DogCorePlugin : JavaPlugin() {
         handler.register(
             EconomyCommands,
             MuteCommands,
+            NickCommand,
             SnoopCommands,
             TellCommand,
             TpaCommands

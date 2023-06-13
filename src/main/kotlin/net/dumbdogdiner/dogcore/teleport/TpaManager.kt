@@ -1,7 +1,6 @@
 package net.dumbdogdiner.dogcore.teleport
 
 import com.google.common.graph.NetworkBuilder
-import kotlinx.coroutines.runBlocking
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.messages.Messages
 import net.dumbdogdiner.dogcore.util.LinkedQueue
@@ -16,7 +15,6 @@ private typealias Edge = LinkedQueue.Node<TpaConnection>
 
 @Suppress("UnstableApiUsage")
 object TpaManager {
-
     private const val TPA_EXPIRE_MS = 120L * 1000L
 
     /** A network of users and their TPA requests. */
@@ -88,7 +86,7 @@ object TpaManager {
         return null
     }
 
-    fun request(from: Player, to: Player, here: Boolean) {
+    suspend fun request(from: Player, to: Player, here: Boolean) {
         if (from == to) {
             from.sendMessage(Messages["commands.tpa.samePlayer"])
             return
@@ -99,8 +97,8 @@ object TpaManager {
         val request = TpaConnection(here, System.currentTimeMillis())
         addRequest(from.uniqueId, to.uniqueId, request)
 
-        val fromName = runBlocking { NameFormatter.formatUsername(from) }
-        val toName = runBlocking { NameFormatter.formatUsername(to) }
+        val fromName = NameFormatter.formatUsername(from)
+        val toName = NameFormatter.formatUsername(to)
 
         from.sendMessage(Messages["commands.tpa.sent", toName])
         val accept = Messages["commands.tpa.accept"]
@@ -118,10 +116,10 @@ object TpaManager {
         requestNetwork.removeNode(uuid)
     }
 
-    fun accept(from: Player, to: Player) {
+    suspend fun accept(from: Player, to: Player) {
         val request = takeRequest(from.uniqueId, to.uniqueId)
         if (request != null) {
-            val name = runBlocking { NameFormatter.formatUsername(to) }
+            val name = NameFormatter.formatUsername(to)
             from.sendMessage(Messages["commands.tpaccept.from", name])
             to.sendMessage(Messages["commands.tpaccept"])
 
@@ -135,10 +133,10 @@ object TpaManager {
         }
     }
 
-    fun deny(from: Player, to: Player) {
+    suspend fun deny(from: Player, to: Player) {
         val request = takeRequest(from.uniqueId, to.uniqueId)
         if (request != null) {
-            val name = runBlocking { NameFormatter.formatUsername(to) }
+            val name = NameFormatter.formatUsername(to)
             from.sendMessage(Messages["commands.tpdeny.from", name])
             to.sendMessage(Messages["commands.tpdeny"])
         } else {

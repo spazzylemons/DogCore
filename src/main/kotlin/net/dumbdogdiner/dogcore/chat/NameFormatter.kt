@@ -2,8 +2,8 @@ package net.dumbdogdiner.dogcore.chat
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
+import net.dumbdogdiner.dogcore.util.CoroutineThreadPool
+import net.dumbdogdiner.dogcore.util.await
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
@@ -27,13 +27,7 @@ object NameFormatter {
         ?: TextColor.fromCSSHexString(color)
 
     private suspend fun getOrLoadUser(uuid: UUID, name: String): User {
-        return lp.userManager.getUser(uuid) ?: suspendCancellableCoroutine { continuation ->
-            // spawn a thread to block for the continuation
-            Thread {
-                // operation executes in another thread, catching exceptions to propagate to coroutine
-                continuation.resumeWith(runCatching { lp.userManager.loadUser(uuid, name).get() })
-            }.start()
-        }
+        return lp.userManager.getUser(uuid) ?: lp.userManager.loadUser(uuid, name).await()
     }
 
     suspend fun formatUsername(uuid: UUID, name: String): Component {
@@ -52,7 +46,13 @@ object NameFormatter {
             .insertion(name)
     }
 
-    suspend fun formatUsername(player: Player) = formatUsername(player.uniqueId, player.name)
+    suspend fun formatUsername(player: Player): Component {
+        net.dumbdogdiner.dogcore.db.User.lookup(player)?.let {
+            return it.formattedName()
+        } ?: run {
+            return formatUsername(player.uniqueId, player.name)
+        }
+    }
 
     fun init(plugin: JavaPlugin) {
         server = plugin.server
@@ -60,15 +60,17 @@ object NameFormatter {
         eventBus.subscribe(plugin, GroupDataRecalculateEvent::class.java) { invalidate() }
     }
 
-    suspend fun updatePlayerListName(player: Player) {
-        player.playerListName(formatUsername(player))
+    suspend fun refreshPlayerName(player: Player) {
+        val name = formatUsername(player)
+        player.displayName(name)
+        player.playerListName(name)
     }
 
     private fun invalidate() {
-        runBlocking {
+        CoroutineThreadPool.launch {
             server.onlinePlayers.map { player ->
                 async {
-                    updatePlayerListName(player)
+                    refreshPlayerName(player)
                 }
             }.awaitAll()
         }

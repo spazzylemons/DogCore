@@ -6,6 +6,8 @@ import net.dumbdogdiner.dogcore.commands.commandError
 import net.dumbdogdiner.dogcore.db.tables.Mutes
 import net.dumbdogdiner.dogcore.db.tables.Users
 import net.dumbdogdiner.dogcore.messages.Messages
+import net.dumbdogdiner.dogcore.util.CoroutineThreadPool
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
@@ -110,6 +112,24 @@ class User private constructor(private val uuid: UUID) {
     val username
         get() = Db.transaction { Users.select { Users.uniqueId eq uuid }.first()[Users.username] }
 
+    var nickname
+        get() = Db.transaction { Users.select { Users.uniqueId eq uuid }.first()[Users.nickname] }
+        set(value) {
+            if (value == null || value.length <= Users.MAX_NICKNAME_LENGTH) {
+                Db.transaction {
+                    Users.update({ Users.uniqueId eq uuid }) {
+                        it[nickname] = value
+                    }
+                }
+                val player = Bukkit.getPlayer(uuid)
+                if (player != null) {
+                    CoroutineThreadPool.launch {
+                        NameFormatter.refreshPlayerName(player)
+                    }
+                }
+            }
+        }
+
     var socialSpy
         get() = Db.transaction { Users.select { Users.uniqueId eq uuid }.first()[Users.socialSpy] }
         set(value) = Db.transaction {
@@ -118,9 +138,13 @@ class User private constructor(private val uuid: UUID) {
             }
         }
 
-    // TODO this shouldn't be blocking
-    fun formattedName() = runBlocking {
-        NameFormatter.formatUsername(uuid, username)
+    suspend fun formattedName(): Component {
+        // get the nickname, or the username
+        val name = Db.transaction {
+            val row = Users.select { Users.uniqueId eq uuid }.first()
+            row[Users.nickname] ?: row[Users.username]
+        }
+        return NameFormatter.formatUsername(uuid, name)
     }
 
     companion object {
@@ -162,7 +186,7 @@ class User private constructor(private val uuid: UUID) {
             Users.selectAll()
                 .orderBy(Users.balance, SortOrder.DESC)
                 .limit(PAGE_SIZE, (page - 1).toLong() * PAGE_SIZE)
-                .map { User(it[Users.uniqueId]).formattedName() to it[Users.balance] }
+                .map { runBlocking { User(it[Users.uniqueId]).formattedName() } to it[Users.balance] }
         }
 
         fun spies() = Db.transaction {

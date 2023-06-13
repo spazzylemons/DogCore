@@ -43,6 +43,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         val firstJoin = User.register(player)
         // set their tab list name
         val name = runBlocking { NameFormatter.formatUsername(player) }
+        player.displayName(name)
         player.playerListName(name)
         // remove access to some vanilla commands
         plugin.removeVanillaOverrides(player)

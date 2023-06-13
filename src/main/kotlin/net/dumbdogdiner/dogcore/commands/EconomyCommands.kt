@@ -3,6 +3,7 @@ package net.dumbdogdiner.dogcore.commands
 import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.db.User
 import net.dumbdogdiner.dogcore.messages.Messages
+import net.dumbdogdiner.dogcore.util.CoroutineThreadPool
 import net.kyori.adventure.text.Component
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.CommandSender
@@ -30,7 +31,9 @@ object EconomyCommands {
         if (playerToLookup == sender) {
             sender.sendMessage(Messages["commands.balance.query", Component.text(balance)])
         } else {
-            sender.sendMessage(Messages["commands.balance.query.other", user.formattedName(), Component.text(balance)])
+            CoroutineThreadPool.launch {
+                sender.sendMessage(Messages["commands.balance.query.other", user.formattedName(), Component.text(balance)])
+            }
         }
     }
 
@@ -58,7 +61,9 @@ object EconomyCommands {
         val from = User.lookupCommand(sender)
         val to = User.lookupCommand(player)
         if (from.pay(to, amount)) {
-            sender.sendMessage(Messages["commands.pay.success", Component.text(amount), to.formattedName()])
+            CoroutineThreadPool.launch {
+                sender.sendMessage(Messages["commands.pay.success", Component.text(amount), to.formattedName()])
+            }
         } else {
             sender.sendMessage(Messages["error.failedTransaction"])
         }

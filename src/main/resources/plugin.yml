@@ -20,3 +20,6 @@ permissions:
   dogcore.snoop:
     description: "Allows spying on other players."
     default: op
+  dogcore.tpa:
+    description: "Allows requesting teleportation."
+    default: true
