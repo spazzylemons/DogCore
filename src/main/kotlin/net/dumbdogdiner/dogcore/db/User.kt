@@ -142,7 +142,7 @@ class User private constructor(private val uuid: UUID) {
         // get the nickname, or the username
         val name = Db.transaction {
             val row = Users.select { Users.uniqueId eq uuid }.first()
-            row[Users.nickname] ?: row[Users.username]
+            row[Users.nickname]?.let { "*$it" } ?: row[Users.username]
         }
         return NameFormatter.formatUsername(uuid, name)
     }
