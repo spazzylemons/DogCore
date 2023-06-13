@@ -43,13 +43,13 @@ class DogCorePlugin : JavaPlugin() {
         }
 
         handler.register(
-            BackCommand,
-            EconomyCommands,
-            MuteCommands,
-            NickCommand,
-            SnoopCommands,
-            TellCommand,
-            TpaCommands
+            BackCommand::class.java,
+            EconomyCommands::class.java,
+            MuteCommands::class.java,
+            NickCommand::class.java,
+            SnoopCommands::class.java,
+            TellCommand::class.java,
+            TpaCommands::class.java
         )
 
         handler.registerExceptionHandler(FormattedCommandException::class.java) { actor, e ->
