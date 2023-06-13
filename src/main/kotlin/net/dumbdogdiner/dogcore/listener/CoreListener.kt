@@ -6,7 +6,7 @@ import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.commands.BackCommand
-import net.dumbdogdiner.dogcore.db.User
+import net.dumbdogdiner.dogcore.database.User
 import net.dumbdogdiner.dogcore.messages.Messages
 import net.dumbdogdiner.dogcore.teleport.TpaManager
 import net.kyori.adventure.text.Component

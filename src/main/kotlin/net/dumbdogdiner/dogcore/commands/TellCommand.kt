@@ -1,7 +1,7 @@
 package net.dumbdogdiner.dogcore.commands
 
 import net.dumbdogdiner.dogcore.chat.NameFormatter
-import net.dumbdogdiner.dogcore.db.User
+import net.dumbdogdiner.dogcore.database.User
 import net.dumbdogdiner.dogcore.messages.Messages
 import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender

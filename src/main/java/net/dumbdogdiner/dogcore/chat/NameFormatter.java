@@ -73,7 +73,7 @@ public final class NameFormatter {
     }
 
     public static @NotNull CompletableFuture<@NotNull Component> formatUsername(@NotNull Player player) {
-        var user = net.dumbdogdiner.dogcore.db.User.Companion.lookup(player);
+        var user = net.dumbdogdiner.dogcore.database.User.lookup(player);
         if (user != null) {
             return user.formattedName();
         } else {

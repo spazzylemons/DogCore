@@ -11,7 +11,7 @@ import net.dumbdogdiner.dogcore.commands.NickCommand
 import net.dumbdogdiner.dogcore.commands.SnoopCommands
 import net.dumbdogdiner.dogcore.commands.TellCommand
 import net.dumbdogdiner.dogcore.commands.TpaCommands
-import net.dumbdogdiner.dogcore.db.Db
+import net.dumbdogdiner.dogcore.database.Database
 import net.dumbdogdiner.dogcore.listener.CoreListener
 import net.dumbdogdiner.dogcore.teleport.initSafeTeleport
 import org.bukkit.Bukkit
@@ -19,14 +19,15 @@ import org.bukkit.command.CommandSender
 import org.bukkit.plugin.java.JavaPlugin
 import revxrsal.commands.bukkit.BukkitCommandHandler
 import revxrsal.commands.bukkit.sender
-import kotlin.time.Duration
+import java.time.Duration
+import java.time.format.DateTimeParseException
 
 private val COMMANDS_TO_REMOVE = arrayOf("msg")
 
 class DogCorePlugin : JavaPlugin() {
     override fun onEnable() {
         initSafeTeleport(this)
-        Db.init(this)
+        Database.init(this)
 
         val handler = BukkitCommandHandler.create(this)
 
@@ -34,7 +35,11 @@ class DogCorePlugin : JavaPlugin() {
         val durationException = DynamicCommandExceptionType { LiteralMessage("Failed to parse duration '$it'") }
         handler.registerValueResolver(Duration::class.java) {
             val arg = it.pop()
-            Duration.parseOrNull(arg) ?: throw durationException.create(arg)
+            try {
+                Duration.parse(arg)
+            } catch (e: DateTimeParseException) {
+                throw durationException.create(arg)
+            }
         }
 
         handler.register(

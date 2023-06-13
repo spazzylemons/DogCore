@@ -1,7 +1,10 @@
+import org.jooq.meta.jaxb.Property
+
 plugins {
     kotlin("jvm") version "1.8.21"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "11.4.0"
+    id("nu.studer.jooq") version "8.2"
 }
 
 group = "net.dumbdogdiner"
@@ -23,11 +26,12 @@ dependencies {
 
     // database
     implementation("org.postgresql:postgresql:42.5.4")
-    implementation("org.jetbrains.exposed:exposed-core:0.41.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+    implementation("org.jooq:jooq:3.18.4")
 
     // permissions
     compileOnly("net.luckperms:api:5.4")
+
+    jooqGenerator("org.jooq:jooq-meta-extensions:3.18.4")
 }
 
 tasks {
@@ -49,4 +53,31 @@ tasks {
 
 kotlin {
     jvmToolchain(17)
+}
+
+jooq {
+    version.set("3.18.4")
+
+    configurations {
+        create("main") {
+            jooqConfiguration.apply {
+                generator.apply {
+                    database.apply {
+                        name = "org.jooq.meta.extensions.ddl.DDLDatabase"
+                        properties.apply {
+                            add(
+                                Property().apply {
+                                    key = "scripts"
+                                    value = "src/main/resources/database.sql"
+                                }
+                            )
+                        }
+                    }
+                    target.apply {
+                        packageName = "net.dumbdogdiner.dogcore.database.schema"
+                    }
+                }
+            }
+        }
+    }
 }

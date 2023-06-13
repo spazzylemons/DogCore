@@ -1,8 +1,7 @@
 package net.dumbdogdiner.dogcore.commands
 
 import net.dumbdogdiner.dogcore.Permissions
-import net.dumbdogdiner.dogcore.db.User
-import net.dumbdogdiner.dogcore.db.tables.Users
+import net.dumbdogdiner.dogcore.database.User
 import net.dumbdogdiner.dogcore.messages.Messages
 import org.bukkit.entity.Player
 import revxrsal.commands.annotation.Command
@@ -15,11 +14,10 @@ object NickCommand {
     @CommandPermission(Permissions.NICK)
     fun nickSet(sender: Player, nickname: String) {
         val user = User.lookupCommand(sender)
-        if (nickname.length > Users.MAX_NICKNAME_LENGTH) {
-            sender.sendMessage(Messages["commands.nick.tooLong"])
-        } else {
-            user.nickname = nickname
+        if (user.setNickname(nickname)) {
             sender.sendMessage(Messages["commands.nick.success"])
+        } else {
+            sender.sendMessage(Messages["commands.nick.tooLong"])
         }
     }
 
@@ -28,7 +26,7 @@ object NickCommand {
     @CommandPermission(Permissions.NICK)
     fun nickClear(sender: Player) {
         val user = User.lookupCommand(sender)
-        user.nickname = null
+        user.setNickname(null)
         sender.sendMessage(Messages["commands.nick.success"])
     }
 
@@ -37,11 +35,10 @@ object NickCommand {
     @CommandPermission(Permissions.NICK_ADMIN)
     fun nickSetOther(sender: Player, player: Player, nickname: String) {
         val user = User.lookupCommand(player)
-        if (nickname.length > Users.MAX_NICKNAME_LENGTH) {
-            sender.sendMessage(Messages["commands.nick.tooLong"])
-        } else {
-            user.nickname = nickname
+        if (user.setNickname(nickname)) {
             sender.sendMessage(Messages["commands.nick.success"])
+        } else {
+            sender.sendMessage(Messages["commands.nick.tooLong"])
         }
     }
 
@@ -50,7 +47,7 @@ object NickCommand {
     @CommandPermission(Permissions.NICK_ADMIN)
     fun nickClearOther(sender: Player, player: Player) {
         val user = User.lookupCommand(player)
-        user.nickname = null
+        user.setNickname(null)
         sender.sendMessage(Messages["commands.nick.success"])
     }
 }
