@@ -1,7 +1,6 @@
 package net.dumbdogdiner.dogcore.listener
 
 import io.papermc.paper.event.player.AsyncChatEvent
-import kotlinx.coroutines.runBlocking
 import net.dumbdogdiner.dogcore.DogCorePlugin
 import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer
@@ -34,7 +33,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         } else {
             // format message
             event.renderer { _, _, message, _ ->
-                Messages["chat", runBlocking { NameFormatter.formatUsername(event.player) }, message]
+                Messages["chat", NameFormatter.formatUsername(event.player).get(), message]
             }
         }
     }
@@ -45,7 +44,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         // register player, if not registered already
         val firstJoin = User.register(player)
         // set their tab list name
-        val name = runBlocking { NameFormatter.formatUsername(player) }
+        val name = NameFormatter.formatUsername(player).get()
         player.displayName(name)
         player.playerListName(name)
         // remove access to some vanilla commands
@@ -60,7 +59,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        val name = runBlocking { NameFormatter.formatUsername(event.player) }
+        val name = NameFormatter.formatUsername(event.player).get()
         event.quitMessage(Messages["chat.quit", name])
         TpaManager.removePlayer(event.player.uniqueId)
         BackCommand.removeBack(event.player.uniqueId)
@@ -71,14 +70,14 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         event.entity.lastDamageCause?.let { lastDamage ->
             val entity = (lastDamage as? EntityDamageByEntityEvent)?.damager?.let {
                 if (it is Player) {
-                    runBlocking { NameFormatter.formatUsername(it) }
+                    NameFormatter.formatUsername(it).get()
                 } else {
                     it.name()
                 }
             }
             val block = (lastDamage as? EntityDamageByBlockEvent)?.damager?.type?.translationKey()
                 ?.let { Component.translatable(it) }
-            val message = death.select(lastDamage.cause, runBlocking { NameFormatter.formatUsername(event.player) }, entity, block)
+            val message = death.select(lastDamage.cause, NameFormatter.formatUsername(event.player).get(), entity, block)
             if (message != null) {
                 event.deathMessage(message)
             }

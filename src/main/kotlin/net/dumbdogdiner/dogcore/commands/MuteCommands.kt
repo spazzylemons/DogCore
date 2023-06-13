@@ -25,9 +25,9 @@ object MuteCommands {
             val user = User.lookupCommand(player)
             user.mute(duration)
             if (duration != null) {
-                sender.sendMessage(Messages["commands.mute.duration", user.formattedName(), Component.text(duration.toString())])
+                sender.sendMessage(Messages["commands.mute.duration", user.formattedName().get(), Component.text(duration.toString())])
             } else {
-                sender.sendMessage(Messages["commands.mute.indefinite", user.formattedName()])
+                sender.sendMessage(Messages["commands.mute.indefinite", user.formattedName().get()])
             }
         }
     }
@@ -38,7 +38,7 @@ object MuteCommands {
         CoroutineThreadPool.launch {
             val user = User.lookupCommand(player)
             user.unmute()
-            sender.sendMessage(Messages["commands.unmute.success", user.formattedName()])
+            sender.sendMessage(Messages["commands.unmute.success", user.formattedName().get()])
         }
     }
 }

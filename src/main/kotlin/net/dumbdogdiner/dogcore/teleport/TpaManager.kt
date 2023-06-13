@@ -86,7 +86,7 @@ object TpaManager {
         return null
     }
 
-    suspend fun request(from: Player, to: Player, here: Boolean) {
+    fun request(from: Player, to: Player, here: Boolean) {
         if (from == to) {
             from.sendMessage(Messages["commands.tpa.samePlayer"])
             return
@@ -97,8 +97,8 @@ object TpaManager {
         val request = TpaConnection(here, System.currentTimeMillis())
         addRequest(from.uniqueId, to.uniqueId, request)
 
-        val fromName = NameFormatter.formatUsername(from)
-        val toName = NameFormatter.formatUsername(to)
+        val fromName = NameFormatter.formatUsername(from).get()
+        val toName = NameFormatter.formatUsername(to).get()
 
         from.sendMessage(Messages["commands.tpa.sent", toName])
         val accept = Messages["commands.tpa.accept"]
@@ -116,10 +116,10 @@ object TpaManager {
         requestNetwork.removeNode(uuid)
     }
 
-    suspend fun accept(from: Player, to: Player) {
+    fun accept(from: Player, to: Player) {
         val request = takeRequest(from.uniqueId, to.uniqueId)
         if (request != null) {
-            val name = NameFormatter.formatUsername(to)
+            val name = NameFormatter.formatUsername(to).get()
             from.sendMessage(Messages["commands.tpaccept.from", name])
             to.sendMessage(Messages["commands.tpaccept"])
 
@@ -133,11 +133,11 @@ object TpaManager {
         }
     }
 
-    suspend fun deny(from: Player, to: Player) {
+    fun deny(from: Player, to: Player) {
         val request = takeRequest(from.uniqueId, to.uniqueId)
         if (request != null) {
             val name = NameFormatter.formatUsername(to)
-            from.sendMessage(Messages["commands.tpdeny.from", name])
+            from.sendMessage(Messages["commands.tpdeny.from", name.get()])
             to.sendMessage(Messages["commands.tpdeny"])
         } else {
             from.sendMessage(Messages["commands.tpa.nothing"])

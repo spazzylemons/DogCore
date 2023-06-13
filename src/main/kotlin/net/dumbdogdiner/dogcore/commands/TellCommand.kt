@@ -1,6 +1,5 @@
 package net.dumbdogdiner.dogcore.commands
 
-import kotlinx.coroutines.runBlocking
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.db.User
 import net.dumbdogdiner.dogcore.messages.Messages
@@ -17,11 +16,11 @@ object TellCommand {
             if (User.lookup(sender)?.isMuted == true) {
                 commandError(Messages["error.muted"])
             }
-            runBlocking { NameFormatter.formatUsername(sender) }
+            NameFormatter.formatUsername(sender).get()
         } else {
             sender.name()
         }
-        val receiverName = runBlocking { NameFormatter.formatUsername(receiver) }
+        val receiverName = NameFormatter.formatUsername(receiver).get()
 
         val messageComponent = Component.text(message)
         sender.sendMessage(Messages["chat.tell.outgoing", receiverName, messageComponent])

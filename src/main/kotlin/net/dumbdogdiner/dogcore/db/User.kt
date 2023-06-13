@@ -1,6 +1,5 @@
 package net.dumbdogdiner.dogcore.db
 
-import kotlinx.coroutines.runBlocking
 import net.dumbdogdiner.dogcore.chat.NameFormatter
 import net.dumbdogdiner.dogcore.commands.commandError
 import net.dumbdogdiner.dogcore.db.tables.Mutes
@@ -19,6 +18,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration
 
 class User private constructor(private val uuid: UUID) {
@@ -138,7 +138,7 @@ class User private constructor(private val uuid: UUID) {
             }
         }
 
-    suspend fun formattedName(): Component {
+    fun formattedName(): CompletableFuture<Component> {
         // get the nickname, or the username
         val name = Db.transaction {
             val row = Users.select { Users.uniqueId eq uuid }.first()
@@ -186,7 +186,7 @@ class User private constructor(private val uuid: UUID) {
             Users.selectAll()
                 .orderBy(Users.balance, SortOrder.DESC)
                 .limit(PAGE_SIZE, (page - 1).toLong() * PAGE_SIZE)
-                .map { runBlocking { User(it[Users.uniqueId]).formattedName() } to it[Users.balance] }
+                .map { User(it[Users.uniqueId]).formattedName().get() to it[Users.balance] }
         }
 
         fun spies() = Db.transaction {
