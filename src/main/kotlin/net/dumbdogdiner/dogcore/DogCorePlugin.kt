@@ -3,6 +3,7 @@ package net.dumbdogdiner.dogcore
 import com.mojang.brigadier.LiteralMessage
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import net.dumbdogdiner.dogcore.chat.NameFormatter
+import net.dumbdogdiner.dogcore.commands.BackCommand
 import net.dumbdogdiner.dogcore.commands.EconomyCommands
 import net.dumbdogdiner.dogcore.commands.FormattedCommandException
 import net.dumbdogdiner.dogcore.commands.MuteCommands
@@ -37,6 +38,7 @@ class DogCorePlugin : JavaPlugin() {
         }
 
         handler.register(
+            BackCommand,
             EconomyCommands,
             MuteCommands,
             NickCommand,

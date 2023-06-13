@@ -3,12 +3,15 @@ package net.dumbdogdiner.dogcore.listener
 import io.papermc.paper.event.player.AsyncChatEvent
 import kotlinx.coroutines.runBlocking
 import net.dumbdogdiner.dogcore.DogCorePlugin
+import net.dumbdogdiner.dogcore.Permissions
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer
 import net.dumbdogdiner.dogcore.chat.NameFormatter
+import net.dumbdogdiner.dogcore.commands.BackCommand
 import net.dumbdogdiner.dogcore.db.User
 import net.dumbdogdiner.dogcore.messages.Messages
 import net.dumbdogdiner.dogcore.teleport.TpaManager
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickEvent
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -60,6 +63,7 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
         val name = runBlocking { NameFormatter.formatUsername(event.player) }
         event.quitMessage(Messages["chat.quit", name])
         TpaManager.removePlayer(event.player.uniqueId)
+        BackCommand.removeBack(event.player.uniqueId)
     }
 
     @EventHandler
@@ -78,6 +82,10 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
             if (message != null) {
                 event.deathMessage(message)
             }
+        }
+        if (event.player.hasPermission(Permissions.BACK)) {
+            event.player.sendMessage(Messages["chat.back"].clickEvent(ClickEvent.runCommand("/back")))
+            BackCommand.setBack(event.player.uniqueId, event.player.location)
         }
     }
 }

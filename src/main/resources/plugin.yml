@@ -8,6 +8,9 @@ api-version: 1.19
 depend:
   - LuckPerms
 permissions:
+  dogcore.back:
+    description: "Allows instantly returning to where you died."
+    default: true
   dogcore.eco:
     description: "Allows using the economy features."
     default: true
@@ -16,6 +19,12 @@ permissions:
     default: op
   dogcore.mute:
     description: "Allows muting and unmuting other players."
+    default: op
+  dogcore.nick:
+    description: "Allows changing your nickname."
+    default: true
+  dogcore.nick.admin:
+    description: "Allows changing other players' nicknames."
     default: op
   dogcore.snoop:
     description: "Allows spying on other players."

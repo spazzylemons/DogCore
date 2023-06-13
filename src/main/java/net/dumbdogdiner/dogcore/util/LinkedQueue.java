@@ -70,7 +70,7 @@ public final class LinkedQueue<E> {
     }
 
     /** Remove a node from the queue. Element order is maintained. */
-    public void remove(@NotNull Node<E> node) {
+    public synchronized void remove(@NotNull Node<E> node) {
         if (!node.inQueue) {
             // node isn't a part of the queue, so don't do anything
             return;

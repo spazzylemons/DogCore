@@ -17,6 +17,7 @@ object TpaCommands {
     }
 
     @Command("tpahere")
+    @CommandPermission(Permissions.TPA)
     fun tpaHere(sender: Player, player: Player) {
         CoroutineThreadPool.launch {
             TpaManager.request(sender, player, true)
