@@ -1,14 +1,14 @@
 contact:
-  - <player> was popped by <block>
+  - <player> was popped by <attacker>
 
 entity-attack:
-  - <player> got pwned by <entity>
+  - <player> got pwned by <attacker>
 
 entity-sweep-attack:
-  - <player> got sliced by <entity>
+  - <player> got sliced by <attacker>
 
 projectile:
-  - <player> was shot by <entity>
+  - <player> was shot by <attacker>
 
 suffocation:
   - <player> tried living in your walls
@@ -30,10 +30,10 @@ drowning:
   - <player> overhydrated
 
 block-explosion:
-  - <player> tried to hug a <block>
+  - <player> tried to hug a <attacker>
 
 entity-explosion:
-  - <player> tried to hug a <entity>
+  - <player> tried to hug a <attacker>
 
 void:
   - <player> went all the way down
@@ -55,7 +55,7 @@ falling-block:
   - <player> didn't look up
 
 thorns:
-  - <player> got popped by <entity>
+  - <player> got popped by <attacker>
 
 dragon-breath:
   - <player> got too comfy with the Dragon

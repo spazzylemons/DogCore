@@ -68,16 +68,19 @@ class CoreListener(private val plugin: DogCorePlugin) : Listener {
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
         event.entity.lastDamageCause?.let { lastDamage ->
-            val entity = (lastDamage as? EntityDamageByEntityEvent)?.damager?.let {
-                if (it is Player) {
-                    NameFormatter.formatUsername(it).get()
-                } else {
-                    it.name()
+            var attacker = when (lastDamage) {
+                is EntityDamageByBlockEvent -> lastDamage.damager?.type?.translationKey()
+                    ?.let { Component.translatable(it) }
+                is EntityDamageByEntityEvent -> lastDamage.damager.let {
+                    if (it is Player) {
+                        NameFormatter.formatUsername(it).get()
+                    } else {
+                        it.name()
+                    }
                 }
+                else -> null
             }
-            val block = (lastDamage as? EntityDamageByBlockEvent)?.damager?.type?.translationKey()
-                ?.let { Component.translatable(it) }
-            val message = death.select(lastDamage.cause, NameFormatter.formatUsername(event.player).get(), entity, block)
+            val message = death.select(lastDamage.cause, NameFormatter.formatUsername(event.player).get(), attacker)
             if (message != null) {
                 event.deathMessage(message)
             }
