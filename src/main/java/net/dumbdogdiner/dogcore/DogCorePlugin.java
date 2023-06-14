@@ -6,6 +6,7 @@ import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.commands.BackCommand;
 import net.dumbdogdiner.dogcore.commands.EconomyCommands;
 import net.dumbdogdiner.dogcore.commands.FormattedCommandException;
+import net.dumbdogdiner.dogcore.commands.GuiCommands;
 import net.dumbdogdiner.dogcore.commands.MuteCommands;
 import net.dumbdogdiner.dogcore.commands.NickCommand;
 import net.dumbdogdiner.dogcore.commands.SnoopCommands;
@@ -45,6 +46,7 @@ public final class DogCorePlugin extends JavaPlugin {
         handler.register(
             BackCommand.class,
             EconomyCommands.class,
+            GuiCommands.class,
             MuteCommands.class,
             NickCommand.class,
             SnoopCommands.class,

@@ -11,11 +11,17 @@ permissions:
   dogcore.back:
     description: "Allows instantly returning to where you died."
     default: true
+  dogcore.craft:
+    description: "Allows opening a crafting table using a command."
+    default: op
   dogcore.eco:
     description: "Allows using the economy features."
     default: true
   dogcore.eco.admin:
     description: "Allows editing the balances of other players."
+    default: op
+  dogcore.enderchest:
+    description: "Allows opening your ender chest using a command."
     default: op
   dogcore.mute:
     description: "Allows muting and unmuting other players."
