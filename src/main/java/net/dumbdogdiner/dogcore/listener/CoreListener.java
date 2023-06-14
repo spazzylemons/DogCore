@@ -34,9 +34,10 @@ public final class CoreListener implements Listener {
 
     @EventHandler
     public void onChat(AsyncChatEvent event) {
+        // this is ran off the main thread so we aren't afraid to block
         var player = event.getPlayer();
-        var user = User.lookup(player);
-        if (user != null && user.isMuted()) {
+        var user = User.lookup(player).toCompletableFuture().join();
+        if (user != null && user.isMuted().toCompletableFuture().join()) {
             // if player is muted, tell them that, and don't send the message
             event.setCancelled(true);
             player.sendMessage(Messages.get("error.muted"));
@@ -44,21 +45,21 @@ public final class CoreListener implements Listener {
         }
         // format message
         event.renderer((source, sourceDisplayName, message, viewer) ->
-            Messages.get("chat", NameFormatter.formatUsername(source).join(), message));
+            Messages.get("chat", source.displayName(), message));
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
         // register player, if not registered already
-        var firstJoin = User.register(player);
+        // we only block here to ensure that no other code runs until this user is registered
+        var firstJoin = User.register(player).toCompletableFuture().join();
         // set their tab list name
-        var name = NameFormatter.formatUsername(player).join();
-        player.displayName(name);
-        player.playerListName(name);
+        NameFormatter.refreshPlayerName(player).toCompletableFuture().join();
         // remove access to some vanilla commands
         plugin.removeVanillaOverrides(player);
         // announce join
+        var name = player.displayName();
         event.joinMessage(Messages.get("chat.join", name));
         // welcome message if new to server
         if (firstJoin) {
@@ -69,7 +70,7 @@ public final class CoreListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         var player = event.getPlayer();
-        var name = NameFormatter.formatUsername(player).join();
+        var name = player.displayName();
         event.quitMessage(Messages.get("chat.quit", name));
         TpaManager.removePlayer(player.getUniqueId());
         BackCommand.removeBack(player.getUniqueId());
@@ -90,14 +91,14 @@ public final class CoreListener implements Listener {
             } else if (lastDamageCause instanceof EntityDamageByEntityEvent byEntity) {
                 var damager = byEntity.getDamager();
                 if (damager instanceof Player player) {
-                    attacker = NameFormatter.formatUsername(player).join();
+                    attacker = player.displayName();
                 } else {
                     attacker = damager.name();
                 }
             } else {
                 attacker = null;
             }
-            var message = death.select(lastDamageCause.getCause(), NameFormatter.formatUsername(event.getPlayer()).join(), attacker);
+            var message = death.select(lastDamageCause.getCause(), event.getPlayer().displayName(), attacker);
             if (message != null) {
                 event.deathMessage(message);
             }

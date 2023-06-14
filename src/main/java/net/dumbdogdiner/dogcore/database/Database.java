@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.CompletionStage;
 import net.dumbdogdiner.dogcore.DogCorePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
@@ -51,11 +52,11 @@ public final class Database {
         }
     }
 
-    public static void executeUpdate(TransactionalRunnable f) {
-        create.transaction(f);
+    public static <T> CompletionStage<T> execute(TransactionalCallable<T> f) {
+        return create.transactionResultAsync(f);
     }
 
-    public static <T> T execute(TransactionalCallable<T> f) {
-        return create.transactionResult(f);
+    public static CompletionStage<Void> executeUpdate(TransactionalRunnable f) {
+        return create.transactionAsync(f);
     }
 }

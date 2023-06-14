@@ -1,5 +1,7 @@
 package net.dumbdogdiner.dogcore.commands;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
@@ -21,12 +23,18 @@ public final class SnoopCommands {
     }
 
     private static void socialSpyHelper(Player sender, @Nullable Boolean state) {
-        var user = User.lookupCommand(sender);
-        if (state != null) {
-            user.setSocialSpy(state);
-        }
-        var newState = user.getSocialSpy() ? "on" : "off";
-        sender.sendMessage(Messages.get("commands.socialspy.check", Component.text(newState)));
+        User.lookupCommand(sender, sender).thenAccept(user -> {
+            CompletionStage<Void> future;
+            if (state != null) {
+                future = user.setSocialSpy(state);
+            } else {
+                future = CompletableFuture.completedFuture(null);
+            }
+            future.thenApply(v -> user.getSocialSpy().thenAccept(result -> {
+                var newState = result ? "on" : "off";
+                sender.sendMessage(Messages.get("commands.socialspy.check", Component.text(newState)));
+            }));
+        });
     }
 
     @Command("socialspy check")

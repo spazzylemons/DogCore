@@ -1,5 +1,6 @@
 package net.dumbdogdiner.dogcore.commands;
 
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.database.User;
@@ -22,50 +23,60 @@ public final class EconomyCommands {
     @Command({"balance", "bal"})
     @CommandPermission(Permissions.ECO)
     public static void balance(CommandSender sender, @Optional OfflinePlayer player) {
+        OfflinePlayer playerToCheck;
         if (player == null) {
             if (sender instanceof Player p) {
-                player = p;
+                playerToCheck = p;
             } else {
                 throw new FormattedCommandException(Messages.get("error.playerNeeded"));
             }
+        } else {
+            playerToCheck = player;
         }
 
-        var user = User.lookupCommand(player);
-        var balance = user.getBalance();
-        if (sender.equals(player)) {
-            sender.sendMessage(Messages.get("commands.balance.query", Component.text(balance)));
-        } else {
-            sender.sendMessage(Messages.get("commands.balance.query.other", user.formattedName().join(), Component.text(balance)));
-        }
+        User.lookupCommand(playerToCheck, sender).thenApply(user -> user.getBalance().thenAccept(balance -> {
+            if (sender.equals(playerToCheck)) {
+                sender.sendMessage(Messages.get("commands.balance.query", Component.text(balance)));
+            } else {
+                user.formattedName().thenAccept(name ->
+                    sender.sendMessage(Messages.get("commands.balance.query.other", name, Component.text(balance))));
+            }
+        }));
     }
 
     @Command({"balancetop", "baltop"})
     @CommandPermission(Permissions.ECO)
     public static void balanceTop(CommandSender sender, @Default("1") @Range(min = 1.0) int page) {
-        for (var entry : User.top(page)) {
-            sender.sendMessage(Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
-        }
+        User.top(page).thenAccept(entries -> {
+            for (var entry : entries) {
+                sender.sendMessage(Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
+            }
+        });
     }
 
     @Command("pay")
     @CommandPermission(Permissions.ECO)
     public static void pay(Player sender, OfflinePlayer player, @Range(min = 1.0) long amount) {
-        var from = User.lookupCommand(sender);
-        var to = User.lookupCommand(player);
-        if (from.pay(to, amount)) {
-            sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), to.formattedName().join()));
-        } else {
-            sender.sendMessage(Messages.get("error.failedTransaction"));
-        }
+        var from = User.lookupCommand(sender, sender);
+        var to = User.lookupCommand(player, sender);
+        from.thenAcceptBothAsync(to, (fromA, toA) -> fromA.pay(toA, amount).thenAccept(success -> {
+            if (success) {
+                toA.formattedName().thenAccept(name ->
+                    sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), name)));
+            } else {
+                sender.sendMessage(Messages.get("error.failedTransaction"));
+            }
+        }));
     }
 
-    private static void economyHelper(CommandSender sender, OfflinePlayer player, Function<@NotNull User, @NotNull Boolean> action) {
-        var user = User.lookupCommand(player);
-        if (action.apply(user)) {
-            sender.sendMessage(Messages.get("commands.economy.success"));
-        } else {
-            sender.sendMessage(Messages.get("error.failedTransaction"));
-        }
+    private static void economyHelper(CommandSender sender, OfflinePlayer player, Function<@NotNull User, @NotNull CompletionStage<@NotNull Boolean>> action) {
+        User.lookupCommand(player, sender).thenAccept(user -> action.apply(user).thenAccept(success -> {
+            if (success) {
+                sender.sendMessage(Messages.get("commands.economy.success"));
+            } else {
+                sender.sendMessage(Messages.get("error.failedTransaction"));
+            }
+        }));
     }
 
     @Command({"economy", "eco"})
@@ -86,9 +97,6 @@ public final class EconomyCommands {
     @Subcommand("set")
     @CommandPermission(Permissions.ECO_ADMIN)
     public static void economySet(CommandSender sender, OfflinePlayer player, long amount) {
-        economyHelper(sender, player, user -> {
-            user.setBalance(amount);
-            return true;
-        });
+        economyHelper(sender, player, user -> user.setBalance(amount).thenApply(v -> true));
     }
 }

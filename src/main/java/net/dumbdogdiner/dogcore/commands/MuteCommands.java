@@ -17,20 +17,19 @@ public final class MuteCommands {
     @Command("mute")
     @CommandPermission(Permissions.MUTE)
     public static void mute(CommandSender sender, OfflinePlayer player, @Optional Duration duration) {
-        var user = User.lookupCommand(player);
-        user.mute(duration);
-        if (duration != null) {
-            sender.sendMessage(Messages.get("commands.mute.duration", user.formattedName().join(), Component.text(duration.toString())));
-        } else {
-            sender.sendMessage(Messages.get("commands.mute.indefinite", user.formattedName().join()));
-        }
+        User.lookupCommand(player, sender).thenApply(user -> user.mute(duration).thenAccept(v -> user.formattedName().thenAccept(name -> {
+            if (duration != null) {
+                sender.sendMessage(Messages.get("commands.mute.duration", name, Component.text(duration.toString())));
+            } else {
+                sender.sendMessage(Messages.get("commands.mute.indefinite", name));
+            }
+        })));
     }
 
     @Command("unmute")
     @CommandPermission(Permissions.MUTE)
     public static void unmute(CommandSender sender, OfflinePlayer player) {
-        var user = User.lookupCommand(player);
-        user.unmute();
-        sender.sendMessage(Messages.get("commands.unmute.success", user.formattedName().join()));
+        User.lookupCommand(player, sender).thenAccept(user -> user.unmute().thenAccept(v ->
+            sender.sendMessage(Messages.get("commands.unmute.success", user.formattedName().join()))));
     }
 }

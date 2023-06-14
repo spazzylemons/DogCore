@@ -98,8 +98,8 @@ public final class TpaManager {
         var request = new TpaConnection(here, System.currentTimeMillis());
         addRequest(from.getUniqueId(), to.getUniqueId(), request);
 
-        var fromName = NameFormatter.formatUsername(from).join();
-        var toName = NameFormatter.formatUsername(to).join();
+        var fromName = from.displayName();
+        var toName = to.displayName();
 
         from.sendMessage(Messages.get("commands.tpa.sent", toName));
         var accept = Messages.get("commands.tpa.accept")
@@ -120,7 +120,7 @@ public final class TpaManager {
     public static void accept(@NotNull Player from, @NotNull Player to) {
         var request = takeRequest(from.getUniqueId(), to.getUniqueId());
         if (request != null) {
-            var name = NameFormatter.formatUsername(to).join();
+            var name = to.displayName();
             from.sendMessage(Messages.get("commands.tpaccept.from", name));
             to.sendMessage(Messages.get("commands.tpaccept"));
 
@@ -137,7 +137,7 @@ public final class TpaManager {
     public static void deny(@NotNull Player from, @NotNull Player to) {
         var request = takeRequest(from.getUniqueId(), to.getUniqueId());
         if (request != null) {
-            var name = NameFormatter.formatUsername(to).join();
+            var name = to.displayName();
             from.sendMessage(Messages.get("commands.tpdeny.from", name));
             to.sendMessage(Messages.get("commands.tpdeny"));
         } else {

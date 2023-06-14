@@ -5,14 +5,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
-import net.dumbdogdiner.dogcore.commands.FormattedCommandException;
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public final class User {
 
     private static final String CHECK_VOILATION = "23514";
 
-    public static record BaltopEntry(Component name, long amount) {}
+    public record BaltopEntry(Component name, long amount) {}
 
     private final @NotNull UUID uuid;
 
@@ -36,7 +37,7 @@ public final class User {
         this.uuid = uuid;
     }
 
-    public boolean isMuted() {
+    public CompletionStage<Boolean> isMuted() {
         return Database.execute(ctx -> {
             var dsl = ctx.dsl();
             // does an entry exist in the mutes table?
@@ -72,9 +73,9 @@ public final class User {
      * Mute for the given duration, or indefinitely if duration is null.
      * Replaces any existing mute duration if one exists.
      */
-    public void mute(@Nullable Duration duration) {
+    public @NotNull CompletionStage<Void> mute(@Nullable Duration duration) {
         var expires = (duration == null) ? null : duration.toMillis() + System.currentTimeMillis();
-        Database.executeUpdate(ctx -> ctx.dsl().insertInto(MUTES)
+        return Database.executeUpdate(ctx -> ctx.dsl().insertInto(MUTES)
             .columns(MUTES.PLAYER_ID, MUTES.EXPIRES)
             .values(uuid, expires)
             .onConflict(MUTES.PLAYER_ID)
@@ -86,13 +87,13 @@ public final class User {
     /**
      * Unmute this player.
      */
-    public void unmute() {
-        Database.executeUpdate(ctx -> ctx.dsl().deleteFrom(MUTES)
+    public @NotNull CompletionStage<Void> unmute() {
+        return Database.executeUpdate(ctx -> ctx.dsl().deleteFrom(MUTES)
             .where(MUTES.PLAYER_ID.eq(uuid))
             .execute());
     }
 
-    public long getBalance() {
+    public @NotNull CompletionStage<@NotNull Long> getBalance() {
         return Database.execute(ctx -> ctx.dsl().select(USERS.BALANCE)
             .from(USERS)
             .where(USERS.UNIQUE_ID.eq(uuid))
@@ -101,8 +102,8 @@ public final class User {
             .value1());
     }
 
-    public void setBalance(long balance) {
-        Database.executeUpdate(ctx -> ctx.dsl().update(USERS)
+    public @NotNull CompletionStage<Void> setBalance(long balance) {
+        return Database.executeUpdate(ctx -> ctx.dsl().update(USERS)
             .set(USERS.BALANCE, balance)
             .where(USERS.UNIQUE_ID.eq(uuid))
             .execute());
@@ -112,7 +113,7 @@ public final class User {
      * Give or take money from this player.
      * Fails if balance would overflow or be negative.
      */
-    public boolean give(long amount) {
+    public @NotNull CompletionStage<@NotNull Boolean> give(long amount) {
         return Database.execute(ctx -> {
             try {
                 ctx.dsl().update(USERS)
@@ -133,11 +134,11 @@ public final class User {
     /**
      * Pay another player. Fails if either balance would be out of range.
      */
-    public boolean pay(@NotNull User other, long amount) {
+    public @NotNull CompletionStage<@NotNull Boolean> pay(@NotNull User other, long amount) {
         // don't allow paying ourselves, or we'd generate infinite money
-        if (other.uuid.equals(uuid)) return false;
+        if (other.uuid.equals(uuid)) return CompletableFuture.completedFuture(false);
         // don't allow paying negatives
-        if (amount < 0L) return false;
+        if (amount < 0L) return CompletableFuture.completedFuture(false);
         // otherwise, perform transaction
         return Database.execute(ctx -> {
             var dsl = ctx.dsl();
@@ -164,22 +165,25 @@ public final class User {
         });
     }
 
-    public boolean setNickname(@Nullable String value) {
+    public @NotNull CompletionStage<@NotNull Boolean> setNickname(@Nullable String value) {
         if (value == null || value.length() <= MAX_NICKNAME_LENGTH) {
-            Database.execute(ctx -> ctx.dsl().update(USERS)
+            return Database.execute(ctx -> ctx.dsl().update(USERS)
                 .set(USERS.NICKNAME, value)
                 .where(USERS.UNIQUE_ID.eq(uuid))
-                .execute());
-            var player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                NameFormatter.refreshPlayerName(player).join();
-            }
-            return true;
+                .execute())
+                .thenCompose(v -> {
+                    var player = Bukkit.getPlayer(uuid);
+                    if (player != null) {
+                        return NameFormatter.refreshPlayerName(player).thenApply(w -> true);
+                    } else {
+                        return CompletableFuture.completedFuture(true);
+                    }
+                });
         }
-        return false;
+        return CompletableFuture.completedFuture(false);
     }
 
-    public boolean getSocialSpy() {
+    public @NotNull CompletionStage<@NotNull Boolean> getSocialSpy() {
         return Database.execute(ctx -> ctx.dsl().select(USERS.SOCIAL_SPY)
             .from(USERS)
             .where(USERS.UNIQUE_ID.eq(uuid))
@@ -188,15 +192,15 @@ public final class User {
             .value1());
     }
 
-    public void setSocialSpy(boolean value) {
-        Database.executeUpdate(ctx -> ctx.dsl().update(USERS)
+    public @NotNull CompletionStage<Void> setSocialSpy(boolean value) {
+        return Database.executeUpdate(ctx -> ctx.dsl().update(USERS)
             .set(USERS.SOCIAL_SPY, value)
             .where(USERS.UNIQUE_ID.eq(uuid))
             .execute());
     }
 
     public @NotNull CompletableFuture<@NotNull Component> formattedName() {
-        var name = Database.execute(ctx -> {
+        return Database.execute(ctx -> {
             var row = ctx.dsl().select(USERS.NICKNAME, USERS.USERNAME)
                 .from(USERS)
                 .where(USERS.UNIQUE_ID.eq(uuid))
@@ -207,31 +211,30 @@ public final class User {
                 return nickname;
             }
             return row.value2();
-        });
-        return NameFormatter.formatUsername(uuid, name);
+        }).thenCompose(name -> NameFormatter.formatUsername(uuid, name)).toCompletableFuture();
     }
 
-    public static @Nullable User lookup(@NotNull UUID uuid) {
-        var exists = Database.execute(ctx -> ctx.dsl().fetchCount(USERS, USERS.UNIQUE_ID.eq(uuid)) != 0);
-        if (exists) {
-            return new User(uuid);
-        }
-        return null;
+    public static @NotNull CompletionStage<@Nullable User> lookup(@NotNull UUID uuid) {
+        return Database.execute(ctx -> ctx.dsl().fetchCount(USERS, USERS.UNIQUE_ID.eq(uuid)) != 0)
+            .thenApply(exists -> exists ? new User(uuid) : null);
     }
 
-    public static @Nullable User lookup(@NotNull OfflinePlayer player) {
+    public static @NotNull CompletionStage<@Nullable User> lookup(@NotNull OfflinePlayer player) {
         return lookup(player.getUniqueId());
     }
 
-    public static @NotNull User lookupCommand(@NotNull OfflinePlayer player) {
-        var result = lookup(player);
-        if (result == null) {
-            throw new FormattedCommandException(Messages.get("error.playerNotFound"));
-        }
-        return result;
+    public static @NotNull CompletionStage<@NotNull User> lookupCommand(@NotNull OfflinePlayer player, @NotNull CommandSender sender) {
+        return lookup(player).thenApply(user -> {
+            if (user == null) {
+                sender.sendMessage(Messages.get("error.playerNotFound"));
+                throw new RuntimeException("what happens when this throws?");
+            } else {
+                return user;
+            }
+        });
     }
 
-    public static boolean register(@NotNull Player player) {
+    public static @NotNull CompletionStage<@NotNull Boolean> register(@NotNull Player player) {
         var uuid = player.getUniqueId();
         var name = player.getName();
         return Database.execute(ctx -> {
@@ -252,21 +255,23 @@ public final class User {
     }
 
     /** Page index starts at 1 */
-    public static @NotNull List<BaltopEntry> top(int page) {
+    public static @NotNull CompletionStage<@NotNull List<@NotNull BaltopEntry>> top(int page) {
         // TODO: https://blog.jooq.org/calculating-pagination-metadata-without-extra-roundtrips-in-sql/
         return Database.execute(ctx -> ctx.dsl().select(USERS.UNIQUE_ID, USERS.BALANCE)
             .from(USERS)
             .orderBy(USERS.BALANCE.sort(SortOrder.DESC))
             .limit((long) (page - 1) * PAGE_SIZE, PAGE_SIZE)
             .fetch(row -> {
-                // TODO don't block here, propagate block to call to top()
-                var name = new User(row.value1()).formattedName().join();
                 var balance = row.value2();
-                return new BaltopEntry(name, balance);
-            }));
+                return new User(row.value1()).formattedName().thenApply(name -> new BaltopEntry(name, balance));
+            })).thenCompose(futures -> {
+                // https://stackoverflow.com/questions/59108125/return-a-completablefuture-containing-a-list-of-completablefutures
+                return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+            });
     }
 
-    public static @NotNull List<@NotNull Player> spies() {
+    public static @NotNull CompletionStage<@NotNull List<@NotNull Player>> spies() {
         return Database.execute(ctx -> ctx.dsl().select(USERS.UNIQUE_ID)
             .from(USERS)
             .where(USERS.SOCIAL_SPY.isTrue())

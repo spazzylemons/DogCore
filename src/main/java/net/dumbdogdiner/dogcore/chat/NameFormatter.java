@@ -2,6 +2,7 @@ package net.dumbdogdiner.dogcore.chat;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -26,7 +27,7 @@ public final class NameFormatter {
             var futures = new CompletableFuture[onlinePlayers.size()];
             var i = 0;
             for (var player : onlinePlayers) {
-                futures[i++] = refreshPlayerName(player);
+                futures[i++] = refreshPlayerName(player).toCompletableFuture();
             }
             CompletableFuture.allOf(futures).join();
         });
@@ -72,16 +73,17 @@ public final class NameFormatter {
         });
     }
 
-    public static @NotNull CompletableFuture<@NotNull Component> formatUsername(@NotNull Player player) {
-        var user = net.dumbdogdiner.dogcore.database.User.lookup(player);
-        if (user != null) {
-            return user.formattedName();
-        } else {
-            return formatUsername(player.getUniqueId(), player.getName());
-        }
+    private static @NotNull CompletionStage<@NotNull Component> formatUsername(@NotNull Player player) {
+        return net.dumbdogdiner.dogcore.database.User.lookup(player).thenCompose(user -> {
+            if (user != null) {
+                return user.formattedName();
+            } else {
+                return formatUsername(player.getUniqueId(), player.getName());
+            }
+        });
     }
 
-    public static @NotNull CompletableFuture<Void> refreshPlayerName(@NotNull Player player) {
+    public static @NotNull CompletionStage<Void> refreshPlayerName(@NotNull Player player) {
         return formatUsername(player).thenApply(name -> {
             player.displayName(name);
             player.playerListName(name);
