@@ -34,7 +34,7 @@ public final class EconomyCommands {
             playerToCheck = player;
         }
 
-        User.lookupCommand(playerToCheck, sender).thenApply(user -> user.getBalance().thenAccept(balance -> {
+        User.lookupCommand(playerToCheck, sender, user -> user.getBalance().thenAccept(balance -> {
             if (sender.equals(playerToCheck)) {
                 sender.sendMessage(Messages.get("commands.balance.query", Component.text(balance)));
             } else {
@@ -57,20 +57,18 @@ public final class EconomyCommands {
     @Command("pay")
     @CommandPermission(Permissions.ECO)
     public static void pay(Player sender, OfflinePlayer player, @Range(min = 1.0) long amount) {
-        var from = User.lookupCommand(sender, sender);
-        var to = User.lookupCommand(player, sender);
-        from.thenAcceptBothAsync(to, (fromA, toA) -> fromA.pay(toA, amount).thenAccept(success -> {
+        User.lookupCommand(sender, sender, from -> User.lookupCommand(player, sender, to -> from.pay(to, amount).thenAccept(success -> {
             if (success) {
-                toA.formattedName().thenAccept(name ->
+                to.formattedName().thenAccept(name ->
                     sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), name)));
             } else {
                 sender.sendMessage(Messages.get("error.failedTransaction"));
             }
-        }));
+        })));
     }
 
     private static void economyHelper(CommandSender sender, OfflinePlayer player, Function<@NotNull User, @NotNull CompletionStage<@NotNull Boolean>> action) {
-        User.lookupCommand(player, sender).thenAccept(user -> action.apply(user).thenAccept(success -> {
+        User.lookupCommand(player, sender, user -> action.apply(user).thenAccept(success -> {
             if (success) {
                 sender.sendMessage(Messages.get("commands.economy.success"));
             } else {

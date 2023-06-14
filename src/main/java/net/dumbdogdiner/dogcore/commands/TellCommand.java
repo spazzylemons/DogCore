@@ -15,9 +15,18 @@ public final class TellCommand {
     @Command({"tell", "msg", "w", "whisper", "pm", "t"})
     public static void tell(CommandSender sender, Player player, String message) {
         // check if muted
-        CompletionStage<Boolean> isMutedFuture = CompletableFuture.completedFuture(false);
+        CompletionStage<Boolean> isMutedFuture;
         if (sender instanceof Player p) {
-            isMutedFuture = User.lookupCommand(p, sender).thenCompose(User::isMuted);
+            var future = new CompletableFuture<Boolean>();
+            isMutedFuture = future;
+            User.lookupCommand(
+                p,
+                sender,
+                user -> user.isMuted().thenAccept(future::complete),
+                () -> future.complete(false)
+            );
+        } else {
+            isMutedFuture = CompletableFuture.completedFuture(false);
         }
         isMutedFuture.thenAccept(isMuted -> {
             if (isMuted) {

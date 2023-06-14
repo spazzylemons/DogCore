@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
@@ -223,13 +225,19 @@ public final class User {
         return lookup(player.getUniqueId());
     }
 
-    public static @NotNull CompletionStage<@NotNull User> lookupCommand(@NotNull OfflinePlayer player, @NotNull CommandSender sender) {
-        return lookup(player).thenApply(user -> {
+    public static void lookupCommand(@NotNull OfflinePlayer player, @NotNull CommandSender sender, @NotNull Consumer<@NotNull User> onSuccess) {
+        lookupCommand(player, sender, onSuccess, null);
+    }
+
+    public static void lookupCommand(@NotNull OfflinePlayer player, @NotNull CommandSender sender, @NotNull Consumer<@NotNull User> onSuccess, @Nullable Runnable onFailure) {
+        lookup(player).thenAccept(user -> {
             if (user == null) {
                 sender.sendMessage(Messages.get("error.playerNotFound"));
-                throw new RuntimeException("what happens when this throws?");
+                if (onFailure != null) {
+                    onFailure.run();
+                }
             } else {
-                return user;
+                onSuccess.accept(user);
             }
         });
     }

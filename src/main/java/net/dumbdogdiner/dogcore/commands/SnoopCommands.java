@@ -23,7 +23,7 @@ public final class SnoopCommands {
     }
 
     private static void socialSpyHelper(Player sender, @Nullable Boolean state) {
-        User.lookupCommand(sender, sender).thenAccept(user -> {
+        User.lookupCommand(sender, sender, user -> {
             CompletionStage<Void> future;
             if (state != null) {
                 future = user.setSocialSpy(state);

@@ -17,7 +17,7 @@ public final class MuteCommands {
     @Command("mute")
     @CommandPermission(Permissions.MUTE)
     public static void mute(CommandSender sender, OfflinePlayer player, @Optional Duration duration) {
-        User.lookupCommand(player, sender).thenApply(user -> user.mute(duration).thenAccept(v -> user.formattedName().thenAccept(name -> {
+        User.lookupCommand(player, sender, user -> user.mute(duration).thenAccept(v -> user.formattedName().thenAccept(name -> {
             if (duration != null) {
                 sender.sendMessage(Messages.get("commands.mute.duration", name, Component.text(duration.toString())));
             } else {
@@ -29,7 +29,7 @@ public final class MuteCommands {
     @Command("unmute")
     @CommandPermission(Permissions.MUTE)
     public static void unmute(CommandSender sender, OfflinePlayer player) {
-        User.lookupCommand(player, sender).thenAccept(user -> user.unmute().thenAccept(v ->
+        User.lookupCommand(player, sender, user -> user.unmute().thenAccept(v ->
             sender.sendMessage(Messages.get("commands.unmute.success", user.formattedName().join()))));
     }
 }

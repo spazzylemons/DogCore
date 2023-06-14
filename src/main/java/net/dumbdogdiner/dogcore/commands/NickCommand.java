@@ -41,7 +41,7 @@ public final class NickCommand {
     }
 
     private static void nickHelper(Player sender, Player player, @Nullable String nickname) {
-        User.lookupCommand(player, sender).thenAccept(user -> user.setNickname(nickname).thenAccept(success -> {
+        User.lookupCommand(player, sender, user  -> user.setNickname(nickname).thenAccept(success -> {
             if (success) {
                 sender.sendMessage(Messages.get("commands.nick.success"));
             } else {
