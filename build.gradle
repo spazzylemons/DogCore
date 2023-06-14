@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.3.2'
+    }
+}
+
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
@@ -24,6 +33,8 @@ dependencies {
     // database
     implementation 'org.postgresql:postgresql:42.5.4'
     implementation 'org.jooq:jooq:3.18.4'
+    // removes a warning, and helps proguard
+    compileOnly 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
 
     // permissions
     compileOnly 'net.luckperms:api:5.4'
@@ -64,4 +75,15 @@ jooq {
             }
         }
     }
+}
+
+task proguard(type: proguard.gradle.ProGuardTask, dependsOn: build) {
+    configuration("${rootDir}/proguard.pro")
+    injars jar.archiveFile.map {"$it" }
+
+    for (file in configurations.compileClasspath.files) {
+        libraryjars "${file}"
+    }
+
+    outjars "${buildDir}/libs/proguard-obfuscated.jar"
 }

@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
