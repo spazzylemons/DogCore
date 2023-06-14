@@ -20,9 +20,9 @@ public final class MuteCommands {
         var user = User.lookupCommand(player);
         user.mute(duration);
         if (duration != null) {
-            sender.sendMessage(Messages.INSTANCE.get("commands.mute.duration", user.formattedName().join(), Component.text(duration.toString())));
+            sender.sendMessage(Messages.get("commands.mute.duration", user.formattedName().join(), Component.text(duration.toString())));
         } else {
-            sender.sendMessage(Messages.INSTANCE.get("commands.mute.indefinite", user.formattedName().join()));
+            sender.sendMessage(Messages.get("commands.mute.indefinite", user.formattedName().join()));
         }
     }
 
@@ -31,6 +31,6 @@ public final class MuteCommands {
     public static void unmute(CommandSender sender, OfflinePlayer player) {
         var user = User.lookupCommand(player);
         user.unmute();
-        sender.sendMessage(Messages.INSTANCE.get("commands.unmute.success", user.formattedName().join()));
+        sender.sendMessage(Messages.get("commands.unmute.success", user.formattedName().join()));
     }
 }

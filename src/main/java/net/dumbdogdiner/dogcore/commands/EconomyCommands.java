@@ -26,26 +26,24 @@ public final class EconomyCommands {
             if (sender instanceof Player p) {
                 player = p;
             } else {
-                throw new FormattedCommandException(Messages.INSTANCE.get("error.playerNeeded"));
+                throw new FormattedCommandException(Messages.get("error.playerNeeded"));
             }
         }
 
         var user = User.lookupCommand(player);
         var balance = user.getBalance();
         if (sender.equals(player)) {
-            sender.sendMessage(Messages.INSTANCE.get("commands.balance.query", Component.text(balance)));
+            sender.sendMessage(Messages.get("commands.balance.query", Component.text(balance)));
         } else {
-            sender.sendMessage(Messages.INSTANCE.get("commands.balance.query.other", user.formattedName().join(), Component.text(balance)));
+            sender.sendMessage(Messages.get("commands.balance.query.other", user.formattedName().join(), Component.text(balance)));
         }
     }
 
     @Command({"balancetop", "baltop"})
     @CommandPermission(Permissions.ECO)
     public static void balanceTop(CommandSender sender, @Default("1") @Range(min = 1.0) int page) {
-        for (var pair : User.top(page)) {
-            var username = pair.getFirst();
-            var amount = pair.getSecond();
-            sender.sendMessage(Messages.INSTANCE.get("commands.balancetop.entry", username, Component.text(amount)));
+        for (var entry : User.top(page)) {
+            sender.sendMessage(Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
         }
     }
 
@@ -55,18 +53,18 @@ public final class EconomyCommands {
         var from = User.lookupCommand(sender);
         var to = User.lookupCommand(player);
         if (from.pay(to, amount)) {
-            sender.sendMessage(Messages.INSTANCE.get("commands.pay.success", Component.text(amount), to.formattedName().join()));
+            sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), to.formattedName().join()));
         } else {
-            sender.sendMessage(Messages.INSTANCE.get("error.failedTransaction"));
+            sender.sendMessage(Messages.get("error.failedTransaction"));
         }
     }
 
     private static void economyHelper(CommandSender sender, OfflinePlayer player, Function<@NotNull User, @NotNull Boolean> action) {
         var user = User.lookupCommand(player);
         if (action.apply(user)) {
-            sender.sendMessage(Messages.INSTANCE.get("commands.economy.success"));
+            sender.sendMessage(Messages.get("commands.economy.success"));
         } else {
-            sender.sendMessage(Messages.INSTANCE.get("error.failedTransaction"));
+            sender.sendMessage(Messages.get("error.failedTransaction"));
         }
     }
 

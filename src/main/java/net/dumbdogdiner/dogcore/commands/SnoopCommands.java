@@ -26,7 +26,7 @@ public final class SnoopCommands {
             user.setSocialSpy(state);
         }
         var newState = user.getSocialSpy() ? "on" : "off";
-        sender.sendMessage(Messages.INSTANCE.get("commands.socialspy.check", Component.text(newState)));
+        sender.sendMessage(Messages.get("commands.socialspy.check", Component.text(newState)));
     }
 
     @Command("socialspy check")

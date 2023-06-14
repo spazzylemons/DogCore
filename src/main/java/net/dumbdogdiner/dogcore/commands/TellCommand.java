@@ -17,7 +17,7 @@ public final class TellCommand {
         Component senderName;
         if (sender instanceof Player p) {
             if (User.lookupCommand(p).isMuted()) {
-                throw new FormattedCommandException(Messages.INSTANCE.get("error.muted"));
+                throw new FormattedCommandException(Messages.get("error.muted"));
             }
             senderName = NameFormatter.formatUsername(p).join();
         } else {
@@ -26,12 +26,12 @@ public final class TellCommand {
         var receiverName = NameFormatter.formatUsername(player).join();
 
         var messageComponent = Component.text(message);
-        sender.sendMessage(Messages.INSTANCE.get("chat.tell.outgoing", receiverName, messageComponent));
-        player.sendMessage(Messages.INSTANCE.get("chat.tell.incoming", senderName, messageComponent));
+        sender.sendMessage(Messages.get("chat.tell.outgoing", receiverName, messageComponent));
+        player.sendMessage(Messages.get("chat.tell.incoming", senderName, messageComponent));
 
         var spies = User.spies();
         if (!spies.isEmpty()) {
-            var spyMessage = Messages.INSTANCE.get("chat.tell.spy", senderName, receiverName, messageComponent);
+            var spyMessage = Messages.get("chat.tell.spy", senderName, receiverName, messageComponent);
 
             for (var spy : spies) {
                 spy.sendMessage(spyMessage);

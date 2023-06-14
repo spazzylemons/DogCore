@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import kotlin.Pair;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.commands.FormattedCommandException;
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
@@ -28,6 +27,8 @@ public final class User {
     private static final String OUT_OF_RANGE = "22003";
 
     private static final String CHECK_VOILATION = "23514";
+
+    public static record BaltopEntry(Component name, long amount) {}
 
     private final @NotNull UUID uuid;
 
@@ -225,7 +226,7 @@ public final class User {
     public static @NotNull User lookupCommand(@NotNull OfflinePlayer player) {
         var result = lookup(player);
         if (result == null) {
-            throw new FormattedCommandException(Messages.INSTANCE.get("error.playerNotFound"));
+            throw new FormattedCommandException(Messages.get("error.playerNotFound"));
         }
         return result;
     }
@@ -251,7 +252,7 @@ public final class User {
     }
 
     /** Page index starts at 1 */
-    public static @NotNull List<Pair<Component, Long>> top(int page) {
+    public static @NotNull List<BaltopEntry> top(int page) {
         // TODO: https://blog.jooq.org/calculating-pagination-metadata-without-extra-roundtrips-in-sql/
         return Database.execute(ctx -> ctx.dsl().select(USERS.UNIQUE_ID, USERS.BALANCE)
             .from(USERS)
@@ -261,7 +262,7 @@ public final class User {
                 // TODO don't block here, propagate block to call to top()
                 var name = new User(row.value1()).formattedName().join();
                 var balance = row.value2();
-                return new Pair<>(name, balance);
+                return new BaltopEntry(name, balance);
             }));
     }
 

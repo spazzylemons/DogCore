@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.messages.Messages;
-import static net.dumbdogdiner.dogcore.teleport.SafeTeleportKt.safeTeleport;
+import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +23,10 @@ public final class BackCommand {
     public static void back(Player player) {
         var location = removeBack(player.getUniqueId());
         if (location == null) {
-            player.sendMessage(Messages.INSTANCE.get("commands.back.nothing"));
+            player.sendMessage(Messages.get("commands.back.nothing"));
         } else {
-            player.sendMessage(Messages.INSTANCE.get("commands.back.success"));
-            safeTeleport(player, location);
+            player.sendMessage(Messages.get("commands.back.success"));
+            SafeTeleport.safeTeleport(player, location);
         }
     }
 

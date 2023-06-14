@@ -31,9 +31,9 @@ public final class NickCommand {
     public static void nickSetOther(Player sender, Player player, String nickname) {
         var user = User.lookupCommand(player);
         if (user.setNickname(nickname)) {
-            sender.sendMessage(Messages.INSTANCE.get("commands.nick.success"));
+            sender.sendMessage(Messages.get("commands.nick.success"));
         } else {
-            sender.sendMessage(Messages.INSTANCE.get("commands.nick.tooLong"));
+            sender.sendMessage(Messages.get("commands.nick.tooLong"));
         }
     }
 
@@ -43,6 +43,6 @@ public final class NickCommand {
     public static void nickClearOther(Player sender, Player player) {
         var user = User.lookupCommand(player);
         user.setNickname(null);
-        sender.sendMessage(Messages.INSTANCE.get("commands.nick.success"));
+        sender.sendMessage(Messages.get("commands.nick.success"));
     }
 }

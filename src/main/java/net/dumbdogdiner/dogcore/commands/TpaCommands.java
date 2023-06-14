@@ -12,22 +12,22 @@ public final class TpaCommands {
     @Command({"tpask", "tpa"})
     @CommandPermission(Permissions.TPA)
     public static void tpa(Player sender, Player player) {
-        TpaManager.INSTANCE.request(sender, player, false);
+        TpaManager.request(sender, player, false);
     }
 
     @Command("tpahere")
     @CommandPermission(Permissions.TPA)
     public static void tpaHere(Player sender, Player player) {
-        TpaManager.INSTANCE.request(sender, player, true);
+        TpaManager.request(sender, player, true);
     }
 
     @Command("tpaccept")
     public static void tpAccept(Player sender, Player player) {
-        TpaManager.INSTANCE.accept(sender, player);
+        TpaManager.accept(sender, player);
     }
 
     @Command("tpdeny")
     public static void tpDeny(Player sender, Player player) {
-        TpaManager.INSTANCE.deny(sender, player);
+        TpaManager.deny(sender, player);
     }
 }

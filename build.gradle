@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'nu.studer.jooq' version '8.2'
+}
+
+group 'net.dumbdogdiner'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io/' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
+
+    // commands
+    compileOnly 'com.mojang:brigadier:1.0.18'
+    implementation 'com.github.Revxrsal.Lamp:common:3.1.5'
+    implementation 'com.github.Revxrsal.Lamp:bukkit:3.1.5'
+
+    // database
+    implementation 'org.postgresql:postgresql:42.5.4'
+    implementation 'org.jooq:jooq:3.18.4'
+
+    // permissions
+    compileOnly 'net.luckperms:api:5.4'
+
+    jooqGenerator 'org.jooq:jooq-meta-extensions:3.18.4'
+}
+
+tasks {
+    build {
+        dependsOn 'shadowJar'
+    }
+
+    shadowJar {
+        archiveClassifier = ''
+        minimize()
+    }
+}
+
+jooq {
+    version = '3.18.4'
+
+    configurations {
+        main {
+            generationTool {
+                generator {
+                    database {
+                        name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
+                        properties {
+                            property {
+                                key = 'scripts'
+                                value = 'src/main/resources/database.sql'
+                            }
+                        }
+                    }
+                    target {
+                        packageName = 'net.dumbdogdiner.dogcore.database.schema'
+                    }
+                }
+            }
+        }
+    }
+}
