@@ -9,6 +9,7 @@ import net.dumbdogdiner.dogcore.commands.AfkCommand;
 import net.dumbdogdiner.dogcore.commands.BackCommand;
 import net.dumbdogdiner.dogcore.commands.EconomyCommands;
 import net.dumbdogdiner.dogcore.commands.GuiCommands;
+import net.dumbdogdiner.dogcore.commands.HomeCommands;
 import net.dumbdogdiner.dogcore.commands.MuteCommands;
 import net.dumbdogdiner.dogcore.commands.NickCommand;
 import net.dumbdogdiner.dogcore.commands.SnoopCommands;
@@ -19,6 +20,7 @@ import net.dumbdogdiner.dogcore.listener.CoreListener;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
 import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +56,7 @@ public final class DogCorePlugin extends JavaPlugin {
             AfkCommand.class,
             BackCommand.class,
             EconomyCommands.class,
+            HomeCommands.class,
             GuiCommands.class,
             MuteCommands.class,
             NickCommand.class,
@@ -94,5 +97,14 @@ public final class DogCorePlugin extends JavaPlugin {
     public void removeVanillaOverrides(@NotNull final CommandSender sender) {
         var attachment = sender.addAttachment(this);
         attachment.setPermission("minecraft.command.msg", false);
+    }
+
+    /**
+     * Create a {@link org.bukkit.NamespacedKey}.
+     * @param key The key.
+     * @return The namespaced key.
+     */
+    public static @NotNull NamespacedKey key(@NotNull final String key) {
+        return new NamespacedKey("dogcore", key);
     }
 }

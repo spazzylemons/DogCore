@@ -18,6 +18,9 @@ public final class Permissions {
     /** The dogcore.enderchest permission. */
     public static final String ENDER_CHEST = "dogcore.enderchest";
 
+    /** The dogcore.home permission. */
+    public static final String HOME = "dogcore.home";
+
     /** The dogcore.mute permission. */
     public static final String MUTE = "dogcore.mute";
 
