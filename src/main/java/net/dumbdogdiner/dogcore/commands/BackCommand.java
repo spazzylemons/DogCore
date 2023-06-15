@@ -14,13 +14,21 @@ import revxrsal.commands.annotation.Command;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 public final class BackCommand {
-    private BackCommand() {}
+    private BackCommand() { }
 
-    private static final Map<@NotNull UUID, @NotNull Location> deathLocations = new HashMap<>();
+    /**
+     * The death locations of players.
+     */
+    private static final Map<@NotNull UUID, @NotNull Location> DEATH_LOCATIONS
+        = new HashMap<>();
 
+    /**
+     * The /back command.
+     * @param player The player sending the command.
+     */
     @Command("back")
     @CommandPermission(Permissions.BACK)
-    public static void back(Player player) {
+    public static void back(final Player player) {
         var location = removeBack(player.getUniqueId());
         if (location == null) {
             player.sendMessage(Messages.get("commands.back.nothing"));
@@ -30,11 +38,24 @@ public final class BackCommand {
         }
     }
 
-    public static synchronized void setBack(@NotNull UUID uuid, @NotNull Location location) {
-        deathLocations.put(uuid, location);
+    /**
+     * Set a player's back location.
+     * @param uuid The player's unique ID.
+     * @param location The location to insert.
+     */
+    public static synchronized void setBack(
+        @NotNull final UUID uuid,
+        @NotNull final Location location
+    ) {
+        DEATH_LOCATIONS.put(uuid, location);
     }
 
-    public static synchronized @Nullable Location removeBack(@NotNull UUID uuid) {
-        return deathLocations.remove(uuid);
+    /**
+     * Remove a player's back location.
+     * @param uuid The player's unique ID.
+     * @return The location that was removed.
+     */
+    public static synchronized @Nullable Location removeBack(@NotNull final UUID uuid) {
+        return DEATH_LOCATIONS.remove(uuid);
     }
 }

@@ -6,17 +6,17 @@ import revxrsal.commands.annotation.Command;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 public final class GuiCommands {
-    private GuiCommands() {}
+    private GuiCommands() { }
 
     @Command({"enderchest", "echest"})
     @CommandPermission(Permissions.ENDER_CHEST)
-    public static void enderChest(Player player) {
+    public static void enderChest(final Player player) {
         player.openInventory(player.getEnderChest());
     }
 
     @Command("craft")
     @CommandPermission(Permissions.CRAFT)
-    public static void craft(Player player) {
+    public static void craft(final Player player) {
         player.openWorkbench(null, false);
     }
 }

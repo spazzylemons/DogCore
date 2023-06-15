@@ -18,17 +18,23 @@ import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 public final class EconomyCommands {
-    private EconomyCommands() {}
+    private EconomyCommands() { }
 
+    /**
+     * The /balance command.
+     * @param sender The sender of the command.
+     * @param player The player to check the balance of.
+     */
     @Command({"balance", "bal"})
     @CommandPermission(Permissions.ECO)
-    public static void balance(CommandSender sender, @Optional OfflinePlayer player) {
+    public static void balance(final CommandSender sender, @Optional final OfflinePlayer player) {
         OfflinePlayer playerToCheck;
         if (player == null) {
             if (sender instanceof Player p) {
                 playerToCheck = p;
             } else {
-                throw new FormattedCommandException(Messages.get("error.playerNeeded"));
+                sender.sendMessage(Messages.get("error.playerNeeded"));
+                return;
             }
         } else {
             playerToCheck = player;
@@ -44,30 +50,51 @@ public final class EconomyCommands {
         }));
     }
 
+    /**
+     * The /balancetop command.
+     * @param sender The sender of the command.
+     * @param page The page to check.
+     */
     @Command({"balancetop", "baltop"})
     @CommandPermission(Permissions.ECO)
-    public static void balanceTop(CommandSender sender, @Default("1") @Range(min = 1.0) int page) {
+    public static void balanceTop(final CommandSender sender, @Default("1") @Range(min = 1.0) final int page) {
         User.top(page).thenAccept(entries -> {
             for (var entry : entries) {
-                sender.sendMessage(Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
+                sender.sendMessage(
+                    Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
             }
         });
     }
 
+    /**
+     * The /pay command.
+     * @param sender The sender of the command.
+     * @param player The player to send money to.
+     * @param amount The amount of money to send.
+     */
     @Command("pay")
     @CommandPermission(Permissions.ECO)
-    public static void pay(Player sender, OfflinePlayer player, @Range(min = 1.0) long amount) {
-        User.lookupCommand(sender, sender, from -> User.lookupCommand(player, sender, to -> from.pay(to, amount).thenAccept(success -> {
-            if (success) {
-                to.formattedName().thenAccept(name ->
-                    sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), name)));
-            } else {
-                sender.sendMessage(Messages.get("error.failedTransaction"));
-            }
-        })));
+    public static void pay(
+        final Player sender,
+        final OfflinePlayer player,
+        @Range(min = 1.0) final long amount
+    ) {
+        User.lookupCommand(sender, sender,
+            from -> User.lookupCommand(player, sender, to -> from.pay(to, amount).thenAccept(success -> {
+                if (success) {
+                    to.formattedName().thenAccept(name ->
+                        sender.sendMessage(Messages.get("commands.pay.success", Component.text(amount), name)));
+                } else {
+                    sender.sendMessage(Messages.get("error.failedTransaction"));
+                }
+            })));
     }
 
-    private static void economyHelper(CommandSender sender, OfflinePlayer player, Function<@NotNull User, @NotNull CompletionStage<@NotNull Boolean>> action) {
+    private static void economyHelper(
+        @NotNull final CommandSender sender,
+        @NotNull final OfflinePlayer player,
+        @NotNull final Function<@NotNull User, @NotNull CompletionStage<@NotNull Boolean>> action
+    ) {
         User.lookupCommand(player, sender, user -> action.apply(user).thenAccept(success -> {
             if (success) {
                 sender.sendMessage(Messages.get("commands.economy.success"));
@@ -80,21 +107,33 @@ public final class EconomyCommands {
     @Command({"economy", "eco"})
     @Subcommand("give")
     @CommandPermission(Permissions.ECO_ADMIN)
-    public static void economyGive(CommandSender sender, OfflinePlayer player, @Range(min = 1.0) long amount) {
+    public static void economyGive(
+        final CommandSender sender,
+        final OfflinePlayer player,
+        @Range(min = 1.0) final long amount
+    ) {
         economyHelper(sender, player, user -> user.give(amount));
     }
 
     @Command({"economy", "eco"})
     @Subcommand("take")
     @CommandPermission(Permissions.ECO_ADMIN)
-    public static void economyTake(CommandSender sender, OfflinePlayer player, @Range(min = 1.0) long amount) {
+    public static void economyTake(
+        final CommandSender sender,
+        final OfflinePlayer player,
+        @Range(min = 1.0) final long amount
+    ) {
         economyHelper(sender, player, user -> user.give(-amount));
     }
 
     @Command({"economy", "eco"})
     @Subcommand("set")
     @CommandPermission(Permissions.ECO_ADMIN)
-    public static void economySet(CommandSender sender, OfflinePlayer player, long amount) {
+    public static void economySet(
+        final CommandSender sender,
+        final OfflinePlayer player,
+        final long amount
+    ) {
         economyHelper(sender, player, user -> user.setBalance(amount).thenApply(v -> true));
     }
 }

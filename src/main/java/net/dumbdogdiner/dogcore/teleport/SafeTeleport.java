@@ -18,12 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
 public final class SafeTeleport {
-    private SafeTeleport() {}
+    private SafeTeleport() { }
 
+    /** The radius to search for teleport locations in. */
     private static final int RADIUS = 3;
 
+    /** The offset to convert a coordinate to the center of the block. */
+    private static final double BLOCK_CENTER = 0.5;
 
-
+    /** The offsets to look for safe teleport positions. */
     private static final List<Vector3i> OFFSETS = new ArrayList<>();
 
     static {
@@ -38,7 +41,7 @@ public final class SafeTeleport {
     }
 
     /**
-     * These materials were selected by a script, to fit the following criteria:
+     * These materials were selected by a script, to fit the following criteria.
      * - If spawned above the block, the player must be able to land on the block.
      * - The block must be tall enough such that the player does not receive effects from the block below.
      * - This must hold true for all block states.
@@ -53,7 +56,7 @@ public final class SafeTeleport {
     private static final Set<Material> SAFE_TO_STAND_ON = new HashSet<>();
 
     /**
-     * These materials were selected manually as blocks you would not want to teleport into:
+     * These materials were selected manually as blocks you would not want to teleport into.
      * - Portals can teleport you somewhere else
      * - Pressure plates and tripwires can activate traps
      * - Fire, soul fire, and lava will burn
@@ -66,7 +69,11 @@ public final class SafeTeleport {
      */
     private static final Map<String, Material> MATERIAL_MAP = new HashMap<>();
 
-    private static void parseMaterialList(@NotNull JavaPlugin plugin, @NotNull String filename, @NotNull Set<Material> set) {
+    private static void parseMaterialList(
+        @NotNull final JavaPlugin plugin,
+        @NotNull final String filename,
+        @NotNull final Set<Material> set
+    ) {
         try (var resource = plugin.getResource(filename)) {
             if (resource == null) {
                 throw new RuntimeException("Missing safe teleport resource " + filename);
@@ -95,7 +102,11 @@ public final class SafeTeleport {
         }
     }
 
-    public static void initSafeTeleport(@NotNull JavaPlugin plugin) {
+    /**
+     * Initialize the safe teleport system.
+     * @param plugin The plugin.
+     */
+    public static void initSafeTeleport(@NotNull final JavaPlugin plugin) {
         for (var mat : Material.values()) {
             if (!mat.isLegacy()) {
                 // only consider if not legacy
@@ -107,7 +118,12 @@ public final class SafeTeleport {
         MATERIAL_MAP.clear();
     }
 
-    private static boolean isSafeTeleport(@NotNull World world, int x, int y, int z) {
+    private static boolean isSafeTeleport(
+        @NotNull final World world,
+        final int x,
+        final int y,
+        final int z
+    ) {
         var block = world.getBlockAt(x, y, z);
         // check that the block we're going to has space for us and won't hurt us
         if (block.isCollidable() || HARMFUL_PASSABLE.contains(block.getType())) {
@@ -125,7 +141,10 @@ public final class SafeTeleport {
         return SAFE_TO_STAND_ON.contains(below.getType());
     }
 
-    public static void safeTeleport(@NotNull Player player, @NotNull Location destination) {
+    public static void safeTeleport(
+        @NotNull final Player player,
+        @NotNull final Location destination
+    ) {
         var world = destination.getWorld();
         var blockX = destination.getBlockX();
         var blockY = destination.getBlockY();
@@ -135,7 +154,7 @@ public final class SafeTeleport {
             var y = offset.y + blockY;
             var z = offset.z + blockZ;
             if (isSafeTeleport(world, x, y, z)) {
-                player.teleportAsync(new Location(world, x + 0.5, y, z + 0.5));
+                player.teleportAsync(new Location(world, x + BLOCK_CENTER, y, z + BLOCK_CENTER));
                 return;
             }
         }

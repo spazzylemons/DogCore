@@ -17,14 +17,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DeathMessageRandomizer {
-    private final Map<EntityDamageEvent.@NotNull DamageCause, @NotNull String @NotNull[]> MESSAGES
+    private DeathMessageRandomizer() { }
+
+    /** The messages, grouped by damage cause. */
+    private static final Map<EntityDamageEvent.@NotNull DamageCause, @NotNull String @NotNull[]> MESSAGES
         = new HashMap<>();
 
-    private final Random RANDOM = new Random();
+    /** The random number generator used. */
+    private static final Random RANDOM = new Random();
 
+    /** The filename of the death messages resource. */
     private static final String FILE = "death.yml";
 
-    public DeathMessageRandomizer(@NotNull JavaPlugin plugin) {
+    /**
+     * Initialize the death message randomizer.
+     * @param plugin The plugin to load messages from.
+     */
+    public static void init(@NotNull final JavaPlugin plugin) {
         var file = new File(plugin.getDataFolder(), FILE);
         if (!file.exists()) {
             plugin.saveResource(FILE, false);
@@ -53,13 +62,25 @@ public final class DeathMessageRandomizer {
         }
     }
 
-    public @Nullable Component select(@NotNull EntityDamageEvent.DamageCause cause, @NotNull Component player, @Nullable Component attacker) {
+    /**
+     * Select a random death message.
+     * @param cause The cause of the last damage received.
+     * @param player The player's name.
+     * @param attacker The attacker, if applicable and found.
+     * @return A component to display, or null to use default.
+     */
+    public static @Nullable Component select(
+        @NotNull final EntityDamageEvent.DamageCause cause,
+        @NotNull final Component player,
+        @Nullable final Component attacker
+    ) {
         var list = MESSAGES.get(cause);
         if (list == null) {
             return null;
         }
         var choice = list[RANDOM.nextInt(list.length)];
-        var builder = TagResolver.builder().resolver(Placeholder.component("player", player));
+        var builder = TagResolver.builder()
+            .resolver(Placeholder.component("player", player));
         if (attacker != null) {
             builder.resolver(Placeholder.component("attacker", attacker));
         }

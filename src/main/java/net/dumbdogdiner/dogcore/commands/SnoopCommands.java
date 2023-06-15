@@ -7,22 +7,26 @@ import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 public final class SnoopCommands {
-    private SnoopCommands() {}
+    private SnoopCommands() { }
 
     @Command("invsee")
     @CommandPermission(Permissions.SNOOP)
-    public static void invSee(Player sender, Player player) {
+    public static void invSee(final Player sender, final Player player) {
         // TODO we could look into offline player support
         // TODO does not show armor slots/offhand
         sender.openInventory(player.getInventory());
     }
 
-    private static void socialSpyHelper(Player sender, @Nullable Boolean state) {
+    private static void socialSpyHelper(
+        @NotNull final Player sender,
+        @Nullable final Boolean state
+    ) {
         User.lookupCommand(sender, sender, user -> {
             CompletionStage<Void> future;
             if (state != null) {
@@ -39,19 +43,19 @@ public final class SnoopCommands {
 
     @Command("socialspy check")
     @CommandPermission(Permissions.SNOOP)
-    public static void socialSpy(Player sender) {
+    public static void socialSpy(final Player sender) {
         socialSpyHelper(sender, null);
     }
 
     @Command("socialspy off")
     @CommandPermission(Permissions.SNOOP)
-    public static void socialSpyOff(Player sender) {
+    public static void socialSpyOff(final Player sender) {
         socialSpyHelper(sender, false);
     }
 
     @Command("socialspy on")
     @CommandPermission(Permissions.SNOOP)
-    public static void socialSpyOn(Player sender) {
+    public static void socialSpyOn(final Player sender) {
         socialSpyHelper(sender, true);
     }
 }

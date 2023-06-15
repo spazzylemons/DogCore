@@ -14,11 +14,18 @@ import org.jooq.TransactionalRunnable;
 import org.jooq.impl.DSL;
 
 public final class Database {
-    private Database() {}
+    private Database() { }
 
+    /**
+     * The database context.
+     */
     private static DSLContext create;
 
-    public static void init(@NotNull DogCorePlugin plugin) {
+    /**
+     * Initialize the database.
+     * @param plugin The plugin to pull configuration from.
+     */
+    public static void init(@NotNull final DogCorePlugin plugin) {
         System.setProperty("org.jooq.no-logo", "true");
         System.setProperty("org.jooq.no-tips", "true");
 
@@ -34,8 +41,9 @@ public final class Database {
         }
 
         Connection conn;
+        var url = "jdbc:postgresql://localhost:" + port + "/" + database;
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + port + "/" + database, username, password);
+            conn = DriverManager.getConnection(url, username, password);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -52,11 +60,26 @@ public final class Database {
         }
     }
 
-    public static <T> CompletionStage<T> execute(TransactionalCallable<T> f) {
+    /**
+     * Execute a transaction and get its result.
+     * @param f The transaction to execute.
+     * @return A future that returns a value.
+     * @param <T> The type of value to return.
+     */
+    public static <T> @NotNull CompletionStage<T> execute(
+        @NotNull final TransactionalCallable<T> f
+    ) {
         return create.transactionResultAsync(f);
     }
 
-    public static CompletionStage<Void> executeUpdate(TransactionalRunnable f) {
+    /**
+     * Execute a transaction that does not return any result.
+     * @param f The transaction to execute.
+     * @return A future that completes when the transaction is finished.
+     */
+    public static @NotNull CompletionStage<Void> executeUpdate(
+        @NotNull final TransactionalRunnable f
+    ) {
         return create.transactionAsync(f);
     }
 }

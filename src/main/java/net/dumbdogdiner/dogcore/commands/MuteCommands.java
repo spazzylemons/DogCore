@@ -12,23 +12,29 @@ import revxrsal.commands.bukkit.annotation.CommandPermission;
 import java.time.Duration;
 
 public final class MuteCommands {
-    private MuteCommands() {}
+    private MuteCommands() { }
 
     @Command("mute")
     @CommandPermission(Permissions.MUTE)
-    public static void mute(CommandSender sender, OfflinePlayer player, @Optional Duration duration) {
-        User.lookupCommand(player, sender, user -> user.mute(duration).thenAccept(v -> user.formattedName().thenAccept(name -> {
-            if (duration != null) {
-                sender.sendMessage(Messages.get("commands.mute.duration", name, Component.text(duration.toString())));
-            } else {
-                sender.sendMessage(Messages.get("commands.mute.indefinite", name));
-            }
-        })));
+    public static void mute(
+        final CommandSender sender,
+        final OfflinePlayer player,
+        @Optional final Duration duration
+    ) {
+        User.lookupCommand(player, sender,
+            user -> user.mute(duration).thenAccept(v -> user.formattedName().thenAccept(name -> {
+                if (duration != null) {
+                    var durationText = Component.text(duration.toString());
+                    sender.sendMessage(Messages.get("commands.mute.duration", name, durationText));
+                } else {
+                    sender.sendMessage(Messages.get("commands.mute.indefinite", name));
+                }
+            })));
     }
 
     @Command("unmute")
     @CommandPermission(Permissions.MUTE)
-    public static void unmute(CommandSender sender, OfflinePlayer player) {
+    public static void unmute(final CommandSender sender, final OfflinePlayer player) {
         User.lookupCommand(player, sender, user -> user.unmute().thenAccept(v ->
             sender.sendMessage(Messages.get("commands.unmute.success", user.formattedName().join()))));
     }

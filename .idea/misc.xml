@@ -7,6 +7,9 @@
     </list>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectResources">
+    <resource url="https://checkstyle.org/dtds/suppressions_1_2.dtd" location="$PROJECT_DIR$/config/checkstyle/checkstyle-suppressions.xml" />
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>

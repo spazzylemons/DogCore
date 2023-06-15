@@ -6,7 +6,6 @@ import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
-import net.dumbdogdiner.dogcore.commands.AfkCommand;
 import net.dumbdogdiner.dogcore.commands.BackCommand;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
@@ -26,18 +25,24 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 public final class CoreListener implements Listener {
+    /** The plugin. */
     private final @NotNull DogCorePlugin plugin;
 
-    private final @NotNull DeathMessageRandomizer death;
-
-    public CoreListener(@NotNull DogCorePlugin plugin) {
-        this.plugin = plugin;
-        this.death = new DeathMessageRandomizer(plugin);
+    /**
+     * Create a listener.
+     * @param p The plugin to use for various tasks.
+     */
+    public CoreListener(@NotNull final DogCorePlugin p) {
+        plugin = p;
     }
 
+    /**
+     * Formats chat messages.
+     * @param event Event to handle.
+     */
     @EventHandler
-    public void onChat(AsyncChatEvent event) {
-        // this is ran off the main thread so we aren't afraid to block
+    public void onChat(final AsyncChatEvent event) {
+        // this runs on a separate thread, so we aren't afraid to block
         var player = event.getPlayer();
         var user = User.lookup(player).toCompletableFuture().join();
         if (user != null && user.isMuted().toCompletableFuture().join()) {
@@ -51,8 +56,12 @@ public final class CoreListener implements Listener {
             Messages.get("chat", source.displayName(), message));
     }
 
+    /**
+     * Handles player join.
+     * @param event Event to handle.
+     */
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         var player = event.getPlayer();
         // register player, if not registered already
         // we only block here to ensure that no other code runs until this user is registered
@@ -72,8 +81,12 @@ public final class CoreListener implements Listener {
         AfkManager.insert(event.getPlayer().getUniqueId(), event.getPlayer().getLocation());
     }
 
+    /**
+     * Handles player quit.
+     * @param event Event to handle.
+     */
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    public void onPlayerQuit(final PlayerQuitEvent event) {
         var player = event.getPlayer();
         var name = player.displayName();
         event.quitMessage(Messages.get("chat.quit", name));
@@ -84,9 +97,14 @@ public final class CoreListener implements Listener {
         AfkManager.removeLocation(uuid);
     }
 
+    /**
+     * Handles player death.
+     * @param event Event to handle.
+     */
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        var lastDamageCause = event.getPlayer().getLastDamageCause();
+    public void onPlayerDeath(final PlayerDeathEvent event) {
+        var player = event.getPlayer();
+        var lastDamageCause = player.getLastDamageCause();
         if (lastDamageCause != null) {
             Component attacker;
             if (lastDamageCause instanceof EntityDamageByBlockEvent byBlock) {
@@ -98,28 +116,36 @@ public final class CoreListener implements Listener {
                 }
             } else if (lastDamageCause instanceof EntityDamageByEntityEvent byEntity) {
                 var damager = byEntity.getDamager();
-                if (damager instanceof Player player) {
-                    attacker = player.displayName();
+                if (damager instanceof Player p) {
+                    attacker = p.displayName();
                 } else {
                     attacker = damager.name();
                 }
             } else {
                 attacker = null;
             }
-            var message = death.select(lastDamageCause.getCause(), event.getPlayer().displayName(), attacker);
+            var cause = lastDamageCause.getCause();
+            var name = player.displayName();
+            var message = DeathMessageRandomizer.select(cause, name, attacker);
             if (message != null) {
                 event.deathMessage(message);
             }
         }
 
-        if (!event.getPlayer().hasPermission(Permissions.BACK)) {
-            event.getPlayer().sendMessage(Messages.get("chat.back").clickEvent(ClickEvent.runCommand("/back")));
-            BackCommand.setBack(event.getPlayer().getUniqueId(), event.getPlayer().getLocation());
+        if (!player.hasPermission(Permissions.BACK)) {
+            player.sendMessage(Messages.get("chat.back")
+                .clickEvent(ClickEvent.runCommand("/back")));
+            BackCommand.setBack(player.getUniqueId(), player.getLocation());
         }
     }
 
+    /**
+     * Updates the AFK manager with the player's new location.
+     * @param event Event to handle.
+     */
     @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        AfkManager.clearAfk(event.getPlayer().getUniqueId(), event.getPlayer().getLocation(), false);
+    public void onPlayerMove(final PlayerMoveEvent event) {
+        var player = event.getPlayer();
+        AfkManager.clearAfk(player.getUniqueId(), player.getLocation(), false);
     }
 }

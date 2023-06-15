@@ -16,12 +16,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public final class NameFormatter {
-    private NameFormatter() {}
+    private NameFormatter() { }
 
+    /** The LuckPerms instance. */
     private static final LuckPerms LUCKPERMS = LuckPermsProvider.get();
 
     @SuppressWarnings("resource")
-    public static void init(@NotNull JavaPlugin plugin) {
+    public static void init(@NotNull final JavaPlugin plugin) {
         LUCKPERMS.getEventBus().subscribe(plugin, GroupDataRecalculateEvent.class, event -> {
             var onlinePlayers = Bukkit.getOnlinePlayers();
             var futures = new CompletableFuture[onlinePlayers.size()];
@@ -33,7 +34,7 @@ public final class NameFormatter {
         });
     }
 
-    private static @NotNull TextColor parseColor(@NotNull String color) {
+    private static @NotNull TextColor parseColor(@NotNull final String color) {
         var result = TextColor.fromCSSHexString(color);
         if (result == null) {
             result = NamedTextColor.NAMES.value(color);
@@ -45,7 +46,10 @@ public final class NameFormatter {
         return result;
     }
 
-    private static @NotNull CompletableFuture<@NotNull User> getOrLoadUser(@NotNull UUID uuid, @NotNull String name) {
+    private static @NotNull CompletableFuture<@NotNull User> getOrLoadUser(
+        @NotNull final UUID uuid,
+        @NotNull final String name
+    ) {
         var userManager = LUCKPERMS.getUserManager();
         var loadedUser = userManager.getUser(uuid);
         if (loadedUser == null) {
@@ -54,7 +58,10 @@ public final class NameFormatter {
         return CompletableFuture.completedFuture(loadedUser);
     }
 
-    public static @NotNull CompletableFuture<@NotNull Component> formatUsername(@NotNull UUID uuid, @NotNull String name) {
+    public static @NotNull CompletableFuture<@NotNull Component> formatUsername(
+        @NotNull final UUID uuid,
+        @NotNull final String name
+    ) {
         return getOrLoadUser(uuid, name).thenApply(user -> {
             TextColor color = NamedTextColor.WHITE;
             String rank = null;
@@ -73,7 +80,7 @@ public final class NameFormatter {
         });
     }
 
-    private static @NotNull CompletionStage<@NotNull Component> formatUsername(@NotNull Player player) {
+    private static @NotNull CompletionStage<@NotNull Component> formatUsername(@NotNull final Player player) {
         return net.dumbdogdiner.dogcore.database.User.lookup(player).thenCompose(user -> {
             if (user != null) {
                 return user.formattedName();
@@ -83,7 +90,7 @@ public final class NameFormatter {
         });
     }
 
-    public static @NotNull CompletionStage<Void> refreshPlayerName(@NotNull Player player) {
+    public static @NotNull CompletionStage<Void> refreshPlayerName(@NotNull final Player player) {
         return formatUsername(player).thenApply(name -> {
             player.displayName(name);
             player.playerListName(name);

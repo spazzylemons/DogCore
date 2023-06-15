@@ -8,6 +8,7 @@ buildscript {
 }
 
 plugins {
+    id 'checkstyle'
     id 'java'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'nu.studer.jooq' version '8.2'
@@ -77,6 +78,12 @@ jooq {
     }
 }
 
+checkstyle {
+    // tell checkstyle to only check our source code, not the generated files
+    checkstyleMain.source = 'src/main/java'
+}
+
+// this doesn't work at the moment - the JAR file does not run correctly
 task proguard(type: proguard.gradle.ProGuardTask, dependsOn: build) {
     configuration("${rootDir}/proguard.pro")
     injars jar.archiveFile.map {"$it" }

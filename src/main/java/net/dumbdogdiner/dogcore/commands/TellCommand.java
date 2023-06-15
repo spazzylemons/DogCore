@@ -10,10 +10,10 @@ import org.bukkit.entity.Player;
 import revxrsal.commands.annotation.Command;
 
 public final class TellCommand {
-    private TellCommand() {}
+    private TellCommand() { }
 
     @Command({"tell", "msg", "w", "whisper", "pm", "t"})
-    public static void tell(CommandSender sender, Player player, String message) {
+    public static void tell(final CommandSender sender, final Player player, final String message) {
         // check if muted
         CompletionStage<Boolean> isMutedFuture;
         if (sender instanceof Player p) {

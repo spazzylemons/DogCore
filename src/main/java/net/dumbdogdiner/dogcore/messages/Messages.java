@@ -10,14 +10,27 @@ import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.jetbrains.annotations.NotNull;
 
 public final class Messages {
-    private Messages() {}
+    private Messages() { }
 
-    private static final ResourceBundle bundle = ResourceBundle.getBundle("messages");
+    /**
+     * The properties file containing the messages.
+     */
+    private static final ResourceBundle BUNDLE =
+        ResourceBundle.getBundle("messages");
 
-    public static @NotNull Component get(@NotNull String key, @NotNull Component... args) {
+    /**
+     * Format a message.
+     * @param key The key of the message.
+     * @param args The components to insert into the message.
+     * @return A formatted message.
+     */
+    public static @NotNull Component get(
+        @NotNull final String key,
+        @NotNull final Component... args
+    ) {
         String message;
         try {
-            message = bundle.getString(key);
+            message = BUNDLE.getString(key);
         } catch (MissingResourceException e) {
             return Component.text(key);
         }

@@ -24,25 +24,36 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public final class AfkManager {
+    private AfkManager() { }
+
+    /** The time it takes to turn AFK. */
     public static final long AFK_MS = 300L * 1000L;
 
+    /** The distance squared needed to move to not be marked AFK. */
     public static final double MIN_DIST_SQUARED = 16.0;
 
-    private record AfkCancelEvent<T extends PlayerEvent>(Class<T> clazz, Predicate<T> condition) implements EventExecutor, Listener {
+    /** Ticks in a second. */
+    private static final int TPS = 20;
+
+    private record AfkCancelEvent<T extends PlayerEvent>(
+        @NotNull Class<T> clazz,
+        @NotNull Predicate<T> condition
+    ) implements EventExecutor, Listener {
         @Override
         @SuppressWarnings("unchecked")
-        public void execute(@NotNull Listener listener, @NotNull Event event) {
+        public void execute(@NotNull final Listener listener, @NotNull final Event event) {
             var playerEvent = (T) event;
             if (condition().test(playerEvent)) {
                 insert(playerEvent.getPlayer());
             }
         }
 
-        public void register(@NotNull JavaPlugin plugin) {
+        public void register(@NotNull final JavaPlugin plugin) {
             Bukkit.getPluginManager().registerEvent(clazz, this, EventPriority.HIGHEST, this, plugin);
         }
     }
 
+    /** The events to cancel AFK on. */
     @SuppressWarnings("unchecked")
     private static final AfkCancelEvent<? extends PlayerEvent>[] EVENTS = new AfkCancelEvent[]{
         new AfkCancelEvent<>(AsyncChatEvent.class, e -> true),
@@ -50,64 +61,83 @@ public final class AfkManager {
         new AfkCancelEvent<>(PlayerInteractEvent.class, e -> e.getAction() != Action.PHYSICAL),
     };
 
-    private record Entry(@NotNull UUID player, long time) {}
+    private record Entry(@NotNull UUID player, long time) { }
 
     /**
      * A list of all players that are not AFK. The players at the head of the list have moved least recently.
      */
-    private static final LinkedQueue<Entry> queue = new LinkedQueue<>();
+    private static final LinkedQueue<Entry> QUEUE = new LinkedQueue<>();
 
     /** A map of players to entry nodes. */
-    private static final Map<@NotNull UUID, LinkedQueue.@NotNull Node<Entry>> players = new HashMap<>();
+    private static final Map<@NotNull UUID, LinkedQueue.@NotNull Node<Entry>> PLAYERS = new HashMap<>();
 
     /** A map of players to entry nodes. */
-    private static final Map<@NotNull UUID, @NotNull Location> afkLocations = new HashMap<>();
+    private static final Map<@NotNull UUID, @NotNull Location> AFK_LOCATIONS = new HashMap<>();
 
-    public static void init(@NotNull JavaPlugin plugin) {
+    public static void init(@NotNull final JavaPlugin plugin) {
         // establish a repeating task to query the player list
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, AfkManager::setAfkPlayers, 20, 20);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, AfkManager::setAfkPlayers, 0, TPS);
         // register event handlers for each event that will cause a player to be no longer AFK
         for (var event : EVENTS) {
             event.register(plugin);
         }
     }
 
-    public static synchronized boolean isAfk(@NotNull UUID uuid) {
-        return !players.containsKey(uuid);
+    public static synchronized boolean isAfk(@NotNull final UUID uuid) {
+        return !PLAYERS.containsKey(uuid);
     }
 
-    public static synchronized void insert(@NotNull UUID uuid, @NotNull Location newLocation) {
-        players.put(uuid, queue.push(new Entry(uuid, System.currentTimeMillis())));
-        afkLocations.put(uuid, newLocation);
+    public static synchronized void insert(
+        @NotNull final UUID uuid,
+        @NotNull final Location newLocation
+    ) {
+        PLAYERS.put(uuid, QUEUE.push(new Entry(uuid, System.currentTimeMillis())));
+        AFK_LOCATIONS.put(uuid, newLocation);
     }
 
-    public static void insert(@NotNull Player player) {
+    public static void insert(@NotNull final Player player) {
         insert(player.getUniqueId(), player.getLocation());
     }
 
-    public static synchronized boolean remove(@NotNull UUID uuid) {
-        var oldNode = players.remove(uuid);
+    public static synchronized boolean remove(@NotNull final UUID uuid) {
+        var oldNode = PLAYERS.remove(uuid);
         if (oldNode != null) {
-            queue.remove(oldNode);
+            QUEUE.remove(oldNode);
             return true;
         }
         return false;
     }
 
-    public static synchronized void removeLocation(@NotNull UUID uuid) {
-        afkLocations.remove(uuid);
+    /**
+     * Remove a player's data from the AFK manager.
+     * @param uuid The player's unique ID.
+     */
+    public static synchronized void removeLocation(@NotNull final UUID uuid) {
+        AFK_LOCATIONS.remove(uuid);
     }
 
-    public static synchronized void clearAfk(@NotNull UUID uuid, @NotNull Location newLocation, boolean force) {
+    /**
+     * Potentially clear a player's AFK state.
+     * @param uuid The player's unique ID.
+     * @param newLocation The new location of the player.
+     * @param force If true, this will always clear AFK state.
+     */
+    public static synchronized void clearAfk(
+        @NotNull final UUID uuid,
+        @NotNull final Location newLocation,
+        final boolean force
+    ) {
         // is the location significantly far enough?
-        var afkLocation = afkLocations.get(uuid);
+        var afkLocation = AFK_LOCATIONS.get(uuid);
         if (afkLocation != null) {
-            if (!force && afkLocation.getWorld().equals(newLocation.getWorld()) && afkLocation.distanceSquared(newLocation) < MIN_DIST_SQUARED) {
+            if (!force
+                && afkLocation.getWorld().equals(newLocation.getWorld())
+                && afkLocation.distanceSquared(newLocation) < MIN_DIST_SQUARED) {
                 // nothing to change
                 return;
             } else {
                 // load new AFK location
-                afkLocations.put(uuid, afkLocation);
+                AFK_LOCATIONS.put(uuid, afkLocation);
             }
         }
         var wasAfk = isAfk(uuid);
@@ -118,14 +148,26 @@ public final class AfkManager {
         }
     }
 
-    public static synchronized void toggleAfk(@NotNull UUID uuid, @NotNull Location playerLocation) {
+    /**
+     * Toggle the AFK status of a player.
+     * @param uuid The player's unique ID.
+     * @param playerLocation The location of the player.
+     */
+    public static synchronized void toggleAfk(
+        @NotNull final UUID uuid,
+        @NotNull final Location playerLocation
+    ) {
         if (!remove(uuid)) {
             insert(uuid, playerLocation);
         }
         announceAfk(uuid);
     }
 
-    private static synchronized void announceAfk(@NotNull UUID uuid) {
+    /**
+     * Announce a player's AFK state.
+     * @param uuid The player's unique ID.
+     */
+    private static synchronized void announceAfk(@NotNull final UUID uuid) {
         User.lookup(uuid).thenCompose(user -> {
             if (user != null) {
                 return user.formattedName().thenAccept(name -> {
@@ -138,14 +180,17 @@ public final class AfkManager {
         });
     }
 
+    /**
+     * Check players and set AFK players as necessary.
+     */
     private static synchronized void setAfkPlayers() {
         var now = System.currentTimeMillis();
         while (true) {
-            var node = queue.peek();
+            var node = QUEUE.peek();
             if (node != null && node.getValue().time + AFK_MS < now) {
                 var player = node.getValue().player;
-                players.remove(player);
-                queue.remove(node);
+                PLAYERS.remove(player);
+                QUEUE.remove(node);
                 announceAfk(player);
                 continue;
             }
