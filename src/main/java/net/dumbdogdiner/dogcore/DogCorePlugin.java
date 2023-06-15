@@ -2,7 +2,9 @@ package net.dumbdogdiner.dogcore;
 
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
+import net.dumbdogdiner.dogcore.commands.AfkCommand;
 import net.dumbdogdiner.dogcore.commands.BackCommand;
 import net.dumbdogdiner.dogcore.commands.EconomyCommands;
 import net.dumbdogdiner.dogcore.commands.FormattedCommandException;
@@ -43,7 +45,10 @@ public final class DogCorePlugin extends JavaPlugin {
             }
         });
 
+        AfkManager.init(this);
+
         handler.register(
+            AfkCommand.class,
             BackCommand.class,
             EconomyCommands.class,
             GuiCommands.class,
