@@ -32,7 +32,7 @@ public final class SafeTeleport {
     static {
         for (var x = -RADIUS; x <= RADIUS; x++) {
             for (var y = -RADIUS; y <= RADIUS; y++) {
-                for (var z = RADIUS; z <= RADIUS; z++) {
+                for (var z = -RADIUS; z <= RADIUS; z++) {
                     OFFSETS.add(new Vector3i(x, y, z));
                 }
             }
@@ -154,7 +154,11 @@ public final class SafeTeleport {
             var y = offset.y + blockY;
             var z = offset.z + blockZ;
             if (isSafeTeleport(world, x, y, z)) {
-                player.teleportAsync(new Location(world, x + BLOCK_CENTER, y, z + BLOCK_CENTER));
+                var newX = x + BLOCK_CENTER;
+                var newZ = z + BLOCK_CENTER;
+                var yaw = destination.getYaw();
+                var pitch = destination.getPitch();
+                player.teleportAsync(new Location(world, newX, y, newZ, yaw, pitch));
                 return;
             }
         }

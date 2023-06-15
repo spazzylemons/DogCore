@@ -16,6 +16,7 @@ import net.dumbdogdiner.dogcore.commands.TellCommand;
 import net.dumbdogdiner.dogcore.commands.TpaCommands;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
+import net.dumbdogdiner.dogcore.teleport.BackManager;
 import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -31,6 +32,7 @@ public final class DogCorePlugin extends JavaPlugin {
         SafeTeleport.initSafeTeleport(this);
         Database.init(this);
         DeathMessageRandomizer.init(this);
+        BackManager.init(this);
 
         var handler = BukkitCommandHandler.create(this);
 

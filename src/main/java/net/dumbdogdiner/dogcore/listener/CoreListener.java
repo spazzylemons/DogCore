@@ -6,7 +6,6 @@ import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
-import net.dumbdogdiner.dogcore.commands.BackCommand;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
@@ -92,7 +91,6 @@ public final class CoreListener implements Listener {
         event.quitMessage(Messages.get("chat.quit", name));
         var uuid = player.getUniqueId();
         TpaManager.removePlayer(uuid);
-        BackCommand.removeBack(uuid);
         AfkManager.remove(uuid);
         AfkManager.removeLocation(uuid);
     }
@@ -133,9 +131,7 @@ public final class CoreListener implements Listener {
         }
 
         if (!player.hasPermission(Permissions.BACK)) {
-            player.sendMessage(Messages.get("chat.back")
-                .clickEvent(ClickEvent.runCommand("/back")));
-            BackCommand.setBack(player.getUniqueId(), player.getLocation());
+            player.sendMessage(Messages.get("chat.back").clickEvent(ClickEvent.runCommand("/back")));
         }
     }
 
