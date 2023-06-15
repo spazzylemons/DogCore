@@ -19,7 +19,7 @@ public final class HomeCommands {
     /** The key for the home location. */
     private static final NamespacedKey HOME_KEY = DogCorePlugin.key("home");
 
-    private static @Nullable Location getHome(@NotNull final Player player) {
+    public static @Nullable Location getHome(@NotNull final Player player) {
         return player.getPersistentDataContainer().get(HOME_KEY, LocationDataType.INSTANCE);
     }
 

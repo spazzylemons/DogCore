@@ -6,12 +6,15 @@ import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
+import net.dumbdogdiner.dogcore.commands.HomeCommands;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
+import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,7 +24,9 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
+import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
 public final class CoreListener implements Listener {
     /** The plugin. */
@@ -77,7 +82,7 @@ public final class CoreListener implements Listener {
             Bukkit.broadcast(Messages.get("chat.welcome", name));
         }
         // add player to afk manager
-        AfkManager.insert(event.getPlayer().getUniqueId(), event.getPlayer().getLocation());
+        AfkManager.insert(player.getUniqueId(), player.getLocation());
     }
 
     /**
@@ -143,5 +148,39 @@ public final class CoreListener implements Listener {
     public void onPlayerMove(final PlayerMoveEvent event) {
         var player = event.getPlayer();
         AfkManager.clearAfk(player.getUniqueId(), player.getLocation(), false);
+    }
+
+    @EventHandler
+    public void onPlayerSpawn(final PlayerRespawnEvent event) {
+        var player = event.getPlayer();
+        var location = HomeCommands.getHome(player);
+        if (location != null) {
+            // find safe location by home
+            location = SafeTeleport.getSafeTeleport(player, location);
+        }
+        // if we have a spawn location, use that
+        if (location != null) {
+            event.setRespawnLocation(location);
+        } else if (!event.isBedSpawn() && !event.isAnchorSpawn()) {
+            // if the player has a bed or anchor, use that, otherwise use exact spawn point
+            // no random offset like in vanilla!
+            event.setRespawnLocation(getSpawnLocation(player));
+        }
+    }
+
+    @EventHandler
+    public void onPlayerSpawnLocation(final PlayerSpawnLocationEvent event) {
+        // if player hasn't played before, use the exact spawn point
+        var player = event.getPlayer();
+        if (!player.hasPlayedBefore()) {
+            event.setSpawnLocation(getSpawnLocation(player));
+        }
+    }
+
+    private static @NotNull Location getSpawnLocation(@NotNull final Player player) {
+        return player.getWorld()
+            .getSpawnLocation()
+            .clone()
+            .add(SafeTeleport.BLOCK_CENTER, 0.0, SafeTeleport.BLOCK_CENTER);
     }
 }

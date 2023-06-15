@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
 public final class SafeTeleport {
@@ -25,7 +26,7 @@ public final class SafeTeleport {
     private static final int RADIUS = 3;
 
     /** The offset to convert a coordinate to the center of the block. */
-    private static final double BLOCK_CENTER = 0.5;
+    public static final double BLOCK_CENTER = 0.5;
 
     /** The offsets to look for safe teleport positions. */
     private static final List<Vector3i> OFFSETS = new ArrayList<>();
@@ -142,7 +143,7 @@ public final class SafeTeleport {
         return SAFE_TO_STAND_ON.contains(below.getType());
     }
 
-    public static void safeTeleport(
+    public static @Nullable Location getSafeTeleport(
         @NotNull final Player player,
         @NotNull final Location destination
     ) {
@@ -159,11 +160,22 @@ public final class SafeTeleport {
                 var newZ = z + BLOCK_CENTER;
                 var yaw = destination.getYaw();
                 var pitch = destination.getPitch();
-                // TODO what to do if we can't do this safely?
-                player.teleportAsync(new Location(world, newX, y, newZ, yaw, pitch));
-                return;
+                return new Location(world, newX, y, newZ, yaw, pitch);
             }
         }
-        player.sendMessage(Messages.get("error.unsafeTeleport"));
+        return null;
+    }
+
+    public static void safeTeleport(
+        @NotNull final Player player,
+        @NotNull final Location destination
+    ) {
+        // TODO what to do if we can't do this safely?
+        var location = getSafeTeleport(player, destination);
+        if (location != null) {
+            player.teleportAsync(location);
+        } else {
+            player.sendMessage(Messages.get("error.unsafeTeleport"));
+        }
     }
 }
