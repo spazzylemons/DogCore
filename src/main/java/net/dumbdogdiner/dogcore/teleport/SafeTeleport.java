@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import net.dumbdogdiner.dogcore.messages.Messages;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -158,9 +159,11 @@ public final class SafeTeleport {
                 var newZ = z + BLOCK_CENTER;
                 var yaw = destination.getYaw();
                 var pitch = destination.getPitch();
+                // TODO what to do if we can't do this safely?
                 player.teleportAsync(new Location(world, newX, y, newZ, yaw, pitch));
                 return;
             }
         }
+        player.sendMessage(Messages.get("error.unsafeTeleport"));
     }
 }
