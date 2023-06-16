@@ -41,3 +41,6 @@ permissions:
   dogcore.tpa:
     description: "Allows requesting teleportation."
     default: true
+  dogcore.warp:
+    description: "Allows warping to spawn."
+    default: true

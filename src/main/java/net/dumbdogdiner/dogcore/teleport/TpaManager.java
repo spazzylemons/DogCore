@@ -168,9 +168,9 @@ public final class TpaManager {
             to.sendMessage(Messages.get("commands.tpaccept"));
 
             if (request.here) {
-                SafeTeleport.safeTeleport(from, to.getLocation());
+                TeleportHelper.safeTeleport(from, to.getLocation());
             } else {
-                SafeTeleport.safeTeleport(to, from.getLocation());
+                TeleportHelper.safeTeleport(to, from.getLocation());
             }
         } else {
             from.sendMessage(Messages.get("commands.tpa.nothing"));

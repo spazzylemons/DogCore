@@ -35,4 +35,7 @@ public final class Permissions {
 
     /** The dogcore.tpa permission. */
     public static final String TPA = "dogcore.tpa";
+
+    /** The dogcore.warp permission. */
+    public static final String WARP = "dogcore.warp";
 }

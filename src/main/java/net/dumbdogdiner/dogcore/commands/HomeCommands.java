@@ -4,7 +4,7 @@ import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.teleport.LocationDataType;
-import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
+import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -28,7 +28,7 @@ public final class HomeCommands {
     public static void home(final Player sender) {
         var home = getHome(sender);
         if (home != null) {
-            SafeTeleport.safeTeleport(sender, home);
+            TeleportHelper.safeTeleport(sender, home);
             sender.sendMessage(Messages.get("commands.home.success"));
         } else {
             sender.sendMessage(Messages.get("commands.home.noHome"));

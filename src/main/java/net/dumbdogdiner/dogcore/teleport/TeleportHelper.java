@@ -10,8 +10,10 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import net.dumbdogdiner.dogcore.messages.Messages;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,17 +21,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
-public final class SafeTeleport {
-    private SafeTeleport() { }
+public final class TeleportHelper {
+    private TeleportHelper() { }
 
     /** The radius to search for teleport locations in. */
     private static final int RADIUS = 3;
 
     /** The offset to convert a coordinate to the center of the block. */
-    public static final double BLOCK_CENTER = 0.5;
+    private static final double BLOCK_CENTER = 0.5;
 
     /** The offsets to look for safe teleport positions. */
     private static final List<Vector3i> OFFSETS = new ArrayList<>();
+
+    /** The key for the Overworld. */
+    private static final NamespacedKey OVERWORLD = NamespacedKey.minecraft("overworld");
 
     static {
         for (var x = -RADIUS; x <= RADIUS; x++) {
@@ -177,5 +182,13 @@ public final class SafeTeleport {
         } else {
             player.sendMessage(Messages.get("error.unsafeTeleport"));
         }
+    }
+
+    public static @NotNull Location getSpawnLocation() {
+        var world = Bukkit.getServer().getWorld(OVERWORLD);
+        if (world == null) {
+            throw new IllegalStateException("Could not get overworld");
+        }
+        return world.getSpawnLocation().clone().add(BLOCK_CENTER, 0.0, BLOCK_CENTER);
     }
 }

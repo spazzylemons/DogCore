@@ -8,12 +8,11 @@ import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.commands.HomeCommands;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
-import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
+import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -140,7 +139,7 @@ public final class CoreListener implements Listener {
         var location = HomeCommands.getHome(player);
         if (location != null) {
             // find safe location by home
-            location = SafeTeleport.getSafeTeleport(player, location);
+            location = TeleportHelper.getSafeTeleport(player, location);
         }
         // if we have a spawn location, use that
         if (location != null) {
@@ -148,7 +147,7 @@ public final class CoreListener implements Listener {
         } else if (!event.isBedSpawn() && !event.isAnchorSpawn()) {
             // if the player has a bed or anchor, use that, otherwise use exact spawn point
             // no random offset like in vanilla!
-            event.setRespawnLocation(getSpawnLocation(player));
+            event.setRespawnLocation(TeleportHelper.getSpawnLocation());
         }
     }
 
@@ -157,14 +156,7 @@ public final class CoreListener implements Listener {
         // if player hasn't played before, use the exact spawn point
         var player = event.getPlayer();
         if (!player.hasPlayedBefore()) {
-            event.setSpawnLocation(getSpawnLocation(player));
+            event.setSpawnLocation(TeleportHelper.getSpawnLocation());
         }
-    }
-
-    private static @NotNull Location getSpawnLocation(@NotNull final Player player) {
-        return player.getWorld()
-            .getSpawnLocation()
-            .clone()
-            .add(SafeTeleport.BLOCK_CENTER, 0.0, SafeTeleport.BLOCK_CENTER);
     }
 }

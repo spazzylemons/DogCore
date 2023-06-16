@@ -13,12 +13,13 @@ import net.dumbdogdiner.dogcore.commands.HomeCommands;
 import net.dumbdogdiner.dogcore.commands.MuteCommands;
 import net.dumbdogdiner.dogcore.commands.NickCommand;
 import net.dumbdogdiner.dogcore.commands.SnoopCommands;
+import net.dumbdogdiner.dogcore.commands.SpawnCommand;
 import net.dumbdogdiner.dogcore.commands.TellCommand;
 import net.dumbdogdiner.dogcore.commands.TpaCommands;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
-import net.dumbdogdiner.dogcore.teleport.SafeTeleport;
+import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
@@ -31,7 +32,7 @@ import java.time.format.DateTimeParseException;
 public final class DogCorePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
-        SafeTeleport.initSafeTeleport(this);
+        TeleportHelper.initSafeTeleport(this);
         Database.init(this);
         DeathMessageRandomizer.init(this);
         BackManager.init(this);
@@ -61,6 +62,7 @@ public final class DogCorePlugin extends JavaPlugin {
             MuteCommands.class,
             NickCommand.class,
             SnoopCommands.class,
+            SpawnCommand.class,
             TellCommand.class,
             TpaCommands.class
         );
