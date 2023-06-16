@@ -3,7 +3,6 @@ package net.dumbdogdiner.dogcore.listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.dumbdogdiner.dogcore.Permissions;
-import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.commands.HomeCommands;
@@ -22,7 +21,6 @@ import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
@@ -81,8 +79,6 @@ public final class CoreListener implements Listener {
         if (firstJoin) {
             Bukkit.broadcast(Messages.get("chat.welcome", name));
         }
-        // add player to afk manager
-        AfkManager.insert(player.getUniqueId(), player.getLocation());
     }
 
     /**
@@ -96,8 +92,6 @@ public final class CoreListener implements Listener {
         event.quitMessage(Messages.get("chat.quit", name));
         var uuid = player.getUniqueId();
         TpaManager.removePlayer(uuid);
-        AfkManager.remove(uuid);
-        AfkManager.removeLocation(uuid);
     }
 
     /**
@@ -138,16 +132,6 @@ public final class CoreListener implements Listener {
         if (!player.hasPermission(Permissions.BACK)) {
             player.sendMessage(Messages.get("chat.back").clickEvent(ClickEvent.runCommand("/back")));
         }
-    }
-
-    /**
-     * Updates the AFK manager with the player's new location.
-     * @param event Event to handle.
-     */
-    @EventHandler
-    public void onPlayerMove(final PlayerMoveEvent event) {
-        var player = event.getPlayer();
-        AfkManager.clearAfk(player.getUniqueId(), player.getLocation(), false);
     }
 
     @EventHandler

@@ -13,6 +13,6 @@ public final class AfkCommand {
      */
     @Command("afk")
     public static void afk(final Player player) {
-        AfkManager.toggleAfk(player.getUniqueId(), player.getLocation());
+        AfkManager.toggleAfk(player);
     }
 }

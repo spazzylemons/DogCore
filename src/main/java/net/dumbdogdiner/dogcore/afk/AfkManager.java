@@ -3,31 +3,27 @@ package net.dumbdogdiner.dogcore.afk;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
-import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.plugin.EventExecutor;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class AfkManager {
+public final class AfkManager implements Listener, Runnable {
     private AfkManager() { }
 
     /** The time it takes to turn AFK. */
-    public static final long AFK_MS = 300L * 1000L;
+    private static final long AFK_MS = 300L * 1000L;
 
     /** The distance squared needed to move to not be marked AFK. */
     public static final double MIN_DIST_SQUARED = 16.0;
@@ -35,164 +31,127 @@ public final class AfkManager {
     /** Ticks in a second. */
     private static final int TPS = 20;
 
-    private record AfkCancelEvent<T extends PlayerEvent>(
-        @NotNull Class<T> clazz,
-        @NotNull Predicate<T> condition
-    ) implements EventExecutor, Listener {
-        @Override
-        @SuppressWarnings("unchecked")
-        public void execute(@NotNull final Listener listener, @NotNull final Event event) {
-            var playerEvent = (T) event;
-            if (condition().test(playerEvent)) {
-                insert(playerEvent.getPlayer());
-            }
-        }
+    /** The AFK command itself. Used to avoid clearing AFK as a side effect of running /afk. */
+    private static final String AFK_COMMAND = "/afk";
 
-        public void register(@NotNull final JavaPlugin plugin) {
-            Bukkit.getPluginManager().registerEvent(clazz, this, EventPriority.HIGHEST, this, plugin);
-        }
-    }
+    /** The AFK states for each player. */
+    private static final Map<@NotNull Player, @NotNull AfkState> STATES = new HashMap<>();
 
-    /** The events to cancel AFK on. */
-    @SuppressWarnings("unchecked")
-    private static final AfkCancelEvent<? extends PlayerEvent>[] EVENTS = new AfkCancelEvent[]{
-        new AfkCancelEvent<>(AsyncChatEvent.class, e -> true),
-        new AfkCancelEvent<>(PlayerCommandPreprocessEvent.class, e -> true),
-        new AfkCancelEvent<>(PlayerInteractEvent.class, e -> e.getAction() != Action.PHYSICAL),
-    };
+    /** The queue of non-AFK players. */
+    private static final LinkedQueue<@NotNull AfkNode> QUEUE = new LinkedQueue<>();
 
-    private record Entry(@NotNull UUID player, long time) { }
-
-    /**
-     * A list of all players that are not AFK. The players at the head of the list have moved least recently.
-     */
-    private static final LinkedQueue<Entry> QUEUE = new LinkedQueue<>();
-
-    /** A map of players to entry nodes. */
-    private static final Map<@NotNull UUID, LinkedQueue.@NotNull Node<Entry>> PLAYERS = new HashMap<>();
-
-    /** A map of players to entry nodes. */
-    private static final Map<@NotNull UUID, @NotNull Location> AFK_LOCATIONS = new HashMap<>();
-
-    public static void init(@NotNull final JavaPlugin plugin) {
+    public static void init(final @NotNull Plugin plugin) {
+        // create an instance for events
+        var instance = new AfkManager();
         // establish a repeating task to query the player list
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, AfkManager::setAfkPlayers, 0, TPS);
-        // register event handlers for each event that will cause a player to be no longer AFK
-        for (var event : EVENTS) {
-            event.register(plugin);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, instance, 0, TPS);
+        // register listeners as well
+        Bukkit.getPluginManager().registerEvents(instance, plugin);
+    }
+
+    private static synchronized void setAfk(final @NotNull Player player, final boolean value) {
+        // fetch the state of the player
+        var state = STATES.get(player);
+        // do nothing if player is somehow not in the system
+        if (state == null) {
+            return;
         }
-    }
-
-    public static synchronized boolean isAfk(@NotNull final UUID uuid) {
-        return !PLAYERS.containsKey(uuid);
-    }
-
-    public static synchronized void insert(
-        @NotNull final UUID uuid,
-        @NotNull final Location newLocation
-    ) {
-        PLAYERS.put(uuid, QUEUE.push(new Entry(uuid, System.currentTimeMillis())));
-        AFK_LOCATIONS.put(uuid, newLocation);
-    }
-
-    public static void insert(@NotNull final Player player) {
-        insert(player.getUniqueId(), player.getLocation());
-    }
-
-    public static synchronized boolean remove(@NotNull final UUID uuid) {
-        var oldNode = PLAYERS.remove(uuid);
+        // only do something if changing state
+        var doAnnouncement = state.isAfk() != value;
+        // remove any existing node from the queue
+        var oldNode = state.timeoutNode();
         if (oldNode != null) {
             QUEUE.remove(oldNode);
-            return true;
         }
-        return false;
+        // create new node if necessary
+        var newNode = value ? null : QUEUE.push(new AfkNode(player));
+        // create a new state
+        var newState = new AfkState(player, newNode);
+        STATES.put(player, newState);
+        if (doAnnouncement) {
+            // if we changed state, make an announcement
+            var announcement = value ? "chat.afk.on" : "chat.afk.off";
+            Bukkit.broadcast(Messages.get(announcement, player.displayName()));
+        }
     }
 
-    /**
-     * Remove a player's data from the AFK manager.
-     * @param uuid The player's unique ID.
-     */
-    public static synchronized void removeLocation(@NotNull final UUID uuid) {
-        AFK_LOCATIONS.remove(uuid);
+    public static synchronized void toggleAfk(final @NotNull Player player) {
+        var state = STATES.get(player);
+        if (state == null) {
+            return;
+        }
+        setAfk(player, !state.isAfk());
     }
 
-    /**
-     * Potentially clear a player's AFK state.
-     * @param uuid The player's unique ID.
-     * @param newLocation The new location of the player.
-     * @param force If true, this will always clear AFK state.
-     */
-    public static synchronized void clearAfk(
-        @NotNull final UUID uuid,
-        @NotNull final Location newLocation,
-        final boolean force
-    ) {
-        // is the location significantly far enough?
-        var afkLocation = AFK_LOCATIONS.get(uuid);
-        if (afkLocation != null) {
-            if (!force
-                && afkLocation.getWorld().equals(newLocation.getWorld())
-                && afkLocation.distanceSquared(newLocation) < MIN_DIST_SQUARED) {
-                // nothing to change
-                return;
-            } else {
-                // load new AFK location
-                AFK_LOCATIONS.put(uuid, afkLocation);
+    @EventHandler
+    public synchronized void onJoin(final @NotNull PlayerJoinEvent event) {
+        var player = event.getPlayer();
+        // add the player to the system
+        var node = QUEUE.push(new AfkNode(player));
+        var state = new AfkState(player, node);
+        STATES.put(player, state);
+    }
+
+    @EventHandler
+    public synchronized void onQuit(final @NotNull PlayerQuitEvent event) {
+        var player = event.getPlayer();
+        // remove the player from the system
+        var state = STATES.remove(player);
+        if (state != null) {
+            var node = state.timeoutNode();
+            if (node != null) {
+                QUEUE.remove(node);
             }
         }
-        var wasAfk = isAfk(uuid);
-        remove(uuid);
-        insert(uuid, newLocation);
-        if (wasAfk && !isAfk(uuid)) {
-            announceAfk(uuid);
-        }
     }
 
-    /**
-     * Toggle the AFK status of a player.
-     * @param uuid The player's unique ID.
-     * @param playerLocation The location of the player.
-     */
-    public static synchronized void toggleAfk(
-        @NotNull final UUID uuid,
-        @NotNull final Location playerLocation
-    ) {
-        if (!remove(uuid)) {
-            insert(uuid, playerLocation);
-        }
-        announceAfk(uuid);
-    }
-
-    /**
-     * Announce a player's AFK state.
-     * @param uuid The player's unique ID.
-     */
-    private static synchronized void announceAfk(@NotNull final UUID uuid) {
-        User.lookup(uuid).thenCompose(user -> {
-            if (user != null) {
-                return user.formattedName().thenAccept(name -> {
-                    var message = isAfk(uuid) ? "chat.afk.on" : "chat.afk.off";
-                    Bukkit.broadcast(Messages.get(message, name));
-                });
-            } else {
-                return CompletableFuture.completedFuture(null);
+    @EventHandler(priority = EventPriority.MONITOR)
+    public synchronized void onMove(final @NotNull PlayerMoveEvent event) {
+        var player = event.getPlayer();
+        var state = STATES.get(player);
+        if (state != null) {
+            var oldLoc = state.lastLocation();
+            var newLoc = event.getTo();
+            if (!oldLoc.getWorld().equals(newLoc.getWorld()) || oldLoc.distanceSquared(newLoc) >= MIN_DIST_SQUARED) {
+                // player moved far enough, they are no longer AFK
+                setAfk(player, false);
             }
-        });
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChat(final @NotNull AsyncChatEvent event) {
+        setAfk(event.getPlayer(), false);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onCommand(final @NotNull PlayerCommandPreprocessEvent event) {
+        if (!AFK_COMMAND.equals(event.getMessage())) {
+            setAfk(event.getPlayer(), false);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInteract(final @NotNull PlayerInteractEvent event) {
+        if (event.getAction() != Action.PHYSICAL) {
+            setAfk(event.getPlayer(), false);
+        }
     }
 
     /**
-     * Check players and set AFK players as necessary.
+     * Check for players to automatically set as AFK.
      */
-    private static synchronized void setAfkPlayers() {
+    @Override
+    public synchronized void run() {
         var now = System.currentTimeMillis();
         while (true) {
             var node = QUEUE.peek();
-            if (node != null && node.getValue().time + AFK_MS < now) {
-                var player = node.getValue().player;
-                PLAYERS.remove(player);
-                QUEUE.remove(node);
-                announceAfk(player);
-                continue;
+            if (node != null) {
+                var value = node.getValue();
+                if (value.time() + AFK_MS < now) {
+                    setAfk(value.player(), true);
+                    continue;
+                }
             }
             return;
         }
