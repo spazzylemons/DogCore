@@ -4,6 +4,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.luckperms.api.LuckPerms;
@@ -76,7 +77,9 @@ public final class NameFormatter {
                 rank = metadata.getMetaValue("rank");
             }
             var text = (rank != null) ? "[" + rank + "] " + name : name;
-            return Component.text(text, color).insertion(name);
+            return Component.text(text, color)
+                .insertion(name)
+                .hoverEvent(HoverEvent.showText(Component.text(name)));
         });
     }
 
