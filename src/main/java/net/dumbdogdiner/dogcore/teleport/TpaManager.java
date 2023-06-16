@@ -7,17 +7,25 @@ import java.util.Set;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import net.kyori.adventure.text.event.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import java.util.UUID;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class TpaManager {
+public final class TpaManager implements Listener, Runnable {
     private TpaManager() { }
 
     /** The time in which TPA expires. */
     private static final long TPA_EXPIRE_MS = 120L * 1000L;
+
+    /** The time to repeat the maintenance task (Every minute). */
+    private static final long MAINTENANCE_TICKS = 20L * 60L;
 
     private record TpaConnection(boolean here, long time) { }
 
@@ -27,6 +35,14 @@ public final class TpaManager {
 
     /** The head of the TPA timeout queue. */
     private static final LinkedQueue<TpaConnection> TIMEOUT_QUEUE = new LinkedQueue<>();
+
+    public static void init(final @NotNull Plugin plugin) {
+        var instance = new TpaManager();
+        // register the repeating maintenance task
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, instance, 0L, MAINTENANCE_TICKS);
+        // register event to remove players that leave
+        Bukkit.getPluginManager().registerEvents(instance, plugin);
+    }
 
     private static synchronized LinkedQueue.@Nullable Node<TpaConnection> getEdge(
         @NotNull final UUID from,
@@ -141,7 +157,7 @@ public final class TpaManager {
      * Remove a player from the TPA manager.
      * @param uuid User to remove.
      */
-    public static synchronized void removePlayer(@NotNull final UUID uuid) {
+    private static synchronized void removePlayer(@NotNull final UUID uuid) {
         Set<LinkedQueue.Node<TpaConnection>> edges;
         try {
             edges = REQUEST_NETWORK.incidentEdges(uuid);
@@ -191,5 +207,16 @@ public final class TpaManager {
         } else {
             from.sendMessage(Messages.get("commands.tpa.nothing"));
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(final @NotNull PlayerQuitEvent event) {
+        removePlayer(event.getPlayer().getUniqueId());
+    }
+
+    @Override
+    public void run() {
+        // When the TPA manager is ticked, we will perform maintenance on the network and queue.
+        performMaintenance();
     }
 }
