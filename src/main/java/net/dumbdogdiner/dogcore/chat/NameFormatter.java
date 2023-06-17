@@ -94,10 +94,9 @@ public final class NameFormatter {
     }
 
     public static @NotNull CompletionStage<Void> refreshPlayerName(@NotNull final Player player) {
-        return formatUsername(player).thenApply(name -> {
+        return formatUsername(player).thenAccept(name -> {
             player.displayName(name);
             player.playerListName(name);
-            return null;
         });
     }
 }
