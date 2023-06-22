@@ -138,11 +138,22 @@ public final class User {
      * @param balance The value to set.
      * @return A future which completes when the value is set.
      */
-    public @NotNull CompletionStage<Void> setBalance(final long balance) {
-        return Database.executeUpdate(ctx -> ctx.dsl().update(USERS)
-            .set(USERS.BALANCE, balance)
-            .where(USERS.UNIQUE_ID.eq(uuid))
-            .execute());
+    public @NotNull CompletionStage<@NotNull Boolean> setBalance(final long balance) {
+        return Database.execute(ctx -> {
+            try {
+                ctx.dsl().update(USERS)
+                    .set(USERS.BALANCE, balance)
+                    .where(USERS.UNIQUE_ID.eq(uuid))
+                    .execute();
+            } catch (DataAccessException e) {
+                var s = e.sqlState();
+                if (OUT_OF_RANGE.equals(s) || CHECK_VIOLATION.equals(s)) {
+                    return false;
+                }
+                throw e;
+            }
+            return true;
+        });
     }
 
     /**
@@ -268,18 +279,12 @@ public final class User {
      * @return A future which returns the formatted name of the user.
      */
     public @NotNull CompletableFuture<@NotNull Component> formattedName() {
-        return Database.execute(ctx -> {
-            var row = ctx.dsl().select(USERS.NICKNAME, USERS.USERNAME)
+        return Database.execute(ctx -> ctx.dsl().select(USERS.USERNAME, USERS.NICKNAME)
                 .from(USERS)
                 .where(USERS.UNIQUE_ID.eq(uuid))
                 .fetch()
-                .get(0);
-            var nickname = row.value1();
-            if (nickname != null) {
-                return nickname;
-            }
-            return row.value2();
-        }).thenCompose(name -> NameFormatter.formatUsername(uuid, name))
+                .get(0))
+            .thenCompose(row -> NameFormatter.formatUsername(uuid, row.value1(), row.value2()))
             .toCompletableFuture();
     }
 

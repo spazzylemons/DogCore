@@ -1,18 +1,21 @@
-package net.dumbdogdiner.dogcore.commands;
+package net.dumbdogdiner.dogcore.commands.warp;
 
+import dev.jorel.commandapi.annotations.Command;
+import dev.jorel.commandapi.annotations.Default;
+import dev.jorel.commandapi.annotations.Permission;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import org.bukkit.entity.Player;
-import revxrsal.commands.annotation.Command;
-import revxrsal.commands.bukkit.annotation.CommandPermission;
+import org.jetbrains.annotations.NotNull;
 
+@Command("spawn")
+@Permission(Permissions.WARP)
 public final class SpawnCommand {
     private SpawnCommand() { }
 
-    @Command("spawn")
-    @CommandPermission(Permissions.WARP)
-    public static void warp(final Player player) {
+    @Default
+    public static void spawn(final @NotNull Player player) {
         player.sendMessage(Messages.get("commands.spawn"));
         TeleportHelper.safeTeleport(player, TeleportHelper.getSpawnLocation());
     }

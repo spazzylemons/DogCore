@@ -1,6 +1,5 @@
 package net.dumbdogdiner.dogcore.teleport;
 
-import net.dumbdogdiner.dogcore.commands.HomeCommands;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,7 +11,7 @@ public final class SpawnListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(final @NotNull PlayerRespawnEvent event) {
         var player = event.getPlayer();
-        var location = HomeCommands.getHome(player);
+        var location = HomeManager.getHome(player);
         if (location != null) {
             // find safe location by home
             location = TeleportHelper.getSafeTeleport(player, location);

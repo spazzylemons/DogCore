@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class NameFormatter {
     private NameFormatter() { }
@@ -61,9 +62,16 @@ public final class NameFormatter {
 
     public static @NotNull CompletableFuture<@NotNull Component> formatUsername(
         @NotNull final UUID uuid,
-        @NotNull final String name
+        @NotNull final String username,
+        @Nullable final String nickname
     ) {
-        return getOrLoadUser(uuid, name).thenApply(user -> {
+        return getOrLoadUser(uuid, username).thenApply(user -> {
+            String name;
+            if (nickname == null) {
+                name = username;
+            } else {
+                name = nickname;
+            }
             TextColor color = NamedTextColor.WHITE;
             String rank = null;
             // TODO what if the group isn't loaded either? Shouldn't we load it?
@@ -78,8 +86,8 @@ public final class NameFormatter {
             }
             var text = (rank != null) ? "[" + rank + "] " + name : name;
             return Component.text(text, color)
-                .insertion(name)
-                .hoverEvent(HoverEvent.showText(Component.text(name)));
+                .insertion(username)
+                .hoverEvent(HoverEvent.showText(Component.text(username)));
         });
     }
 
@@ -88,7 +96,7 @@ public final class NameFormatter {
             if (user != null) {
                 return user.formattedName();
             } else {
-                return formatUsername(player.getUniqueId(), player.getName());
+                return formatUsername(player.getUniqueId(), player.getName(), null);
             }
         });
     }

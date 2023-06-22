@@ -1,5 +1,10 @@
 package net.dumbdogdiner.dogcore.commands;
 
+import dev.jorel.commandapi.annotations.Alias;
+import dev.jorel.commandapi.annotations.Command;
+import dev.jorel.commandapi.annotations.Default;
+import dev.jorel.commandapi.annotations.arguments.AGreedyStringArgument;
+import dev.jorel.commandapi.annotations.arguments.APlayerArgument;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import net.dumbdogdiner.dogcore.database.User;
@@ -7,13 +12,19 @@ import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import revxrsal.commands.annotation.Command;
+import org.jetbrains.annotations.NotNull;
 
+@Command("tell")
+@Alias({"msg", "w", "whisper", "pm", "t"})
 public final class TellCommand {
     private TellCommand() { }
 
-    @Command({"tell", "msg", "w", "whisper", "pm", "t"})
-    public static void tell(final CommandSender sender, final Player player, final String message) {
+    @Default
+    public static void tell(
+        final @NotNull CommandSender sender,
+        final @NotNull @APlayerArgument Player player,
+        final @NotNull @AGreedyStringArgument String message
+    ) {
         // check if muted
         CompletionStage<Boolean> isMutedFuture;
         if (sender instanceof Player p) {

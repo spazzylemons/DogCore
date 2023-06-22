@@ -1,50 +1,61 @@
 package net.dumbdogdiner.dogcore.commands;
 
+import dev.jorel.commandapi.annotations.Command;
+import dev.jorel.commandapi.annotations.Permission;
+import dev.jorel.commandapi.annotations.Subcommand;
+import dev.jorel.commandapi.annotations.arguments.AOfflinePlayerArgument;
+import dev.jorel.commandapi.annotations.arguments.AStringArgument;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import revxrsal.commands.annotation.Command;
-import revxrsal.commands.annotation.Subcommand;
-import revxrsal.commands.bukkit.annotation.CommandPermission;
 
+@Command("nick")
 public final class NickCommand {
     private NickCommand() { }
 
-    @Command("nick")
     @Subcommand("set")
-    @CommandPermission(Permissions.NICK)
-    public static void nickSet(final Player sender, final String nickname) {
+    @Permission(Permissions.NICK)
+    public static void nickSet(
+        final @NotNull Player sender,
+        final @NotNull @AStringArgument String nickname
+    ) {
         nickHelper(sender, sender, nickname);
     }
 
-    @Command("nick")
-    @Subcommand("clear")
-    @CommandPermission(Permissions.NICK)
-    public static void nickClear(final Player sender) {
-        nickHelper(sender, sender, null);
-    }
-
-    @Command("nick")
-    @Subcommand("set-other")
-    @CommandPermission(Permissions.NICK_ADMIN)
-    public static void nickSetOther(final Player sender, final Player player, final String nickname) {
+    @Subcommand("set")
+    @Permission(Permissions.NICK_ADMIN)
+    public static void nickSetOther(
+        final @NotNull CommandSender sender,
+        final @NotNull @AOfflinePlayerArgument OfflinePlayer player,
+        final @NotNull @AStringArgument String nickname
+    ) {
         nickHelper(sender, player, nickname);
     }
 
-    @Command("nick")
-    @Subcommand("clear-other")
-    @CommandPermission(Permissions.NICK_ADMIN)
-    public static void nickClearOther(final Player sender, final Player player) {
+    @Subcommand("clear")
+    @Permission(Permissions.NICK)
+    public static void nickClear(final @NotNull Player sender) {
+        nickHelper(sender, sender, null);
+    }
+
+    @Subcommand("clear")
+    @Permission(Permissions.NICK_ADMIN)
+    public static void nickClearOther(
+        final @NotNull Player sender,
+        final @NotNull @AOfflinePlayerArgument OfflinePlayer player
+    ) {
         nickHelper(sender, player, null);
     }
 
     private static void nickHelper(
-        @NotNull final Player sender,
-        @NotNull final Player player,
-        @Nullable final String nickname
+        final @NotNull CommandSender sender,
+        final @NotNull OfflinePlayer player,
+        final @Nullable String nickname
     ) {
         User.lookupCommand(player, sender, user  -> user.setNickname(nickname).thenAccept(success -> {
             if (success) {

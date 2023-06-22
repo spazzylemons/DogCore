@@ -1,5 +1,9 @@
-package net.dumbdogdiner.dogcore.commands;
+package net.dumbdogdiner.dogcore.commands.snoop;
 
+import dev.jorel.commandapi.annotations.Command;
+import dev.jorel.commandapi.annotations.Default;
+import dev.jorel.commandapi.annotations.Permission;
+import dev.jorel.commandapi.annotations.Subcommand;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import net.dumbdogdiner.dogcore.Permissions;
@@ -9,19 +13,11 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import revxrsal.commands.annotation.Command;
-import revxrsal.commands.bukkit.annotation.CommandPermission;
 
-public final class SnoopCommands {
-    private SnoopCommands() { }
-
-    @Command("invsee")
-    @CommandPermission(Permissions.SNOOP)
-    public static void invSee(final Player sender, final Player player) {
-        // TODO we could look into offline player support
-        // TODO does not show armor slots/offhand
-        sender.openInventory(player.getInventory());
-    }
+@Command("socialspy")
+@Permission(Permissions.SNOOP)
+public final class SocialSpyCommand {
+    private SocialSpyCommand() { }
 
     private static void socialSpyHelper(
         @NotNull final Player sender,
@@ -41,21 +37,18 @@ public final class SnoopCommands {
         });
     }
 
-    @Command("socialspy check")
-    @CommandPermission(Permissions.SNOOP)
-    public static void socialSpy(final Player sender) {
+    @Default
+    public static void check(final @NotNull Player sender) {
         socialSpyHelper(sender, null);
     }
 
-    @Command("socialspy off")
-    @CommandPermission(Permissions.SNOOP)
-    public static void socialSpyOff(final Player sender) {
-        socialSpyHelper(sender, false);
+    @Subcommand("on")
+    public static void on(final @NotNull Player sender) {
+        socialSpyHelper(sender, true);
     }
 
-    @Command("socialspy on")
-    @CommandPermission(Permissions.SNOOP)
-    public static void socialSpyOn(final Player sender) {
-        socialSpyHelper(sender, true);
+    @Subcommand("off")
+    public static void off(final @NotNull Player sender) {
+        socialSpyHelper(sender, false);
     }
 }

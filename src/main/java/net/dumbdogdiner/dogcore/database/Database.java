@@ -44,9 +44,11 @@ public final class Database {
         var url = "jdbc:postgresql://localhost:" + port + "/" + database;
         try {
             conn = DriverManager.getConnection(url, username, password);
+            conn.setAutoCommit(false);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
         create = DSL.using(conn, SQLDialect.POSTGRES);
 
         try (var resource = plugin.getResource("database.sql")) {
