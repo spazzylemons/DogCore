@@ -13,9 +13,12 @@ import net.dumbdogdiner.dogcore.teleport.BackManager;
 import net.dumbdogdiner.dogcore.teleport.SpawnListener;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
+import net.dumbdogdiner.dogcore.vault.DogEconomy;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +30,8 @@ public final class DogCorePlugin extends JavaPlugin {
         DeathMessageRandomizer.init(this);
         BackManager.init(this);
         TpaManager.init(this);
+
+        Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
 
         // goodbye, /tell!
         CommandAPI.unregister("tell");

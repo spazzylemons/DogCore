@@ -6,7 +6,9 @@ author: spazzylemons
 website: https://dumbdogdiner.net/
 api-version: "1.20"
 depend:
+  - CommandAPI
   - LuckPerms
+  - Vault
 permissions:
   dogcore.back:
     description: "Allows instantly returning to where you died."
