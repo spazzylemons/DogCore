@@ -10,6 +10,7 @@ import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
+import net.dumbdogdiner.dogcore.listener.PlayerListNameListener;
 import net.dumbdogdiner.dogcore.listener.TabListManager;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
 import net.dumbdogdiner.dogcore.teleport.SpawnListener;
@@ -37,6 +38,7 @@ public final class DogCorePlugin extends JavaPlugin {
         BackManager.init(this);
         TpaManager.init(this);
         TabListManager.init();
+        PlayerListNameListener.init();
 
         Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
 

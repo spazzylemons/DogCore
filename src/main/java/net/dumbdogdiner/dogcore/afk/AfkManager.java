@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
+import net.dumbdogdiner.dogcore.event.AfkChangeEvent;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import org.bukkit.Bukkit;
@@ -54,6 +55,14 @@ public final class AfkManager implements Listener, Runnable, Configurable {
         Configuration.register(instance);
     }
 
+    public static synchronized boolean isAfk(final @NotNull Player player) {
+        var state = STATES.get(player);
+        if (state != null) {
+            return state.isAfk();
+        }
+        return false;
+    }
+
     private static synchronized void setAfk(final @NotNull Player player, final boolean value) {
         // fetch the state of the player
         var state = STATES.get(player);
@@ -77,6 +86,7 @@ public final class AfkManager implements Listener, Runnable, Configurable {
             // if we changed state, make an announcement
             var announcement = value ? "chat.afk.on" : "chat.afk.off";
             Bukkit.broadcast(Messages.get(announcement, player.displayName()));
+            Bukkit.getPluginManager().callEvent(new AfkChangeEvent(player));
         }
     }
 

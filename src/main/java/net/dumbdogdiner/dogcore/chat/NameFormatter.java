@@ -3,6 +3,7 @@ package net.dumbdogdiner.dogcore.chat;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import net.dumbdogdiner.dogcore.event.DisplayNameChangeEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -104,7 +105,7 @@ public final class NameFormatter {
     public static @NotNull CompletionStage<Void> refreshPlayerName(@NotNull final Player player) {
         return formatUsername(player).thenAccept(name -> {
             player.displayName(name);
-            player.playerListName(name);
+            Bukkit.getPluginManager().callEvent(new DisplayNameChangeEvent(player));
         });
     }
 }
