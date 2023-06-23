@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.CompletionStage;
 import net.dumbdogdiner.dogcore.DogCorePlugin;
+import net.dumbdogdiner.dogcore.config.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
@@ -23,16 +24,15 @@ public final class Database {
 
     /**
      * Initialize the database.
-     * @param plugin The plugin to pull configuration from.
      */
-    public static void init(@NotNull final DogCorePlugin plugin) {
+    public static void init() {
         System.setProperty("org.jooq.no-logo", "true");
         System.setProperty("org.jooq.no-tips", "true");
 
-        var username = plugin.getConfigString("db.username");
-        var password = plugin.getConfigString("db.password");
-        var database = plugin.getConfigString("db.database");
-        var port = plugin.getConfigString("db.port");
+        var username = Configuration.getString("db.username");
+        var password = Configuration.getString("db.password");
+        var database = Configuration.getString("db.database");
+        var port = Configuration.getInt("db.port");
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -51,7 +51,7 @@ public final class Database {
 
         create = DSL.using(conn, SQLDialect.POSTGRES);
 
-        try (var resource = plugin.getResource("database.sql")) {
+        try (var resource = DogCorePlugin.getInstance().getResource("database.sql")) {
             if (resource == null) {
                 throw new RuntimeException("required database initialization file is missing from the plugin");
             }

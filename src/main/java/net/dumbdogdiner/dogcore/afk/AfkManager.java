@@ -1,8 +1,11 @@
 package net.dumbdogdiner.dogcore.afk;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import net.dumbdogdiner.dogcore.config.Configurable;
+import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import org.bukkit.Bukkit;
@@ -19,11 +22,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class AfkManager implements Listener, Runnable {
+public final class AfkManager implements Listener, Runnable, Configurable {
     private AfkManager() { }
 
     /** The time it takes to turn AFK. */
-    private static final long AFK_MS = 300L * 1000L;
+    private static long afkMs;
 
     /** The distance squared needed to move to not be marked AFK. */
     public static final double MIN_DIST_SQUARED = 16.0;
@@ -38,7 +41,7 @@ public final class AfkManager implements Listener, Runnable {
     private static final Map<@NotNull Player, @NotNull AfkState> STATES = new HashMap<>();
 
     /** The queue of non-AFK players. */
-    private static final LinkedQueue<@NotNull AfkNode> QUEUE = new LinkedQueue<>();
+    private static LinkedQueue<@NotNull AfkNode> queue;
 
     public static void init(final @NotNull Plugin plugin) {
         // create an instance for events
@@ -47,6 +50,8 @@ public final class AfkManager implements Listener, Runnable {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, instance, 0, TPS);
         // register listeners as well
         Bukkit.getPluginManager().registerEvents(instance, plugin);
+        // register configurable
+        Configuration.register(instance);
     }
 
     private static synchronized void setAfk(final @NotNull Player player, final boolean value) {
@@ -61,10 +66,10 @@ public final class AfkManager implements Listener, Runnable {
         // remove any existing node from the queue
         var oldNode = state.timeoutNode();
         if (oldNode != null) {
-            QUEUE.remove(oldNode);
+            queue.remove(oldNode);
         }
         // create new node if necessary
-        var newNode = value ? null : QUEUE.push(new AfkNode(player));
+        var newNode = value ? null : queue.push(new AfkNode(player));
         // create a new state
         var newState = new AfkState(player, newNode);
         STATES.put(player, newState);
@@ -84,37 +89,44 @@ public final class AfkManager implements Listener, Runnable {
     }
 
     @EventHandler
-    public synchronized void onJoin(final @NotNull PlayerJoinEvent event) {
+    public void onJoin(final @NotNull PlayerJoinEvent event) {
         var player = event.getPlayer();
         // add the player to the system
-        var node = QUEUE.push(new AfkNode(player));
-        var state = new AfkState(player, node);
-        STATES.put(player, state);
+        synchronized (AfkManager.class) {
+            var node = queue.push(new AfkNode(player));
+            var state = new AfkState(player, node);
+            STATES.put(player, state);
+        }
     }
 
     @EventHandler
-    public synchronized void onQuit(final @NotNull PlayerQuitEvent event) {
+    public void onQuit(final @NotNull PlayerQuitEvent event) {
         var player = event.getPlayer();
         // remove the player from the system
-        var state = STATES.remove(player);
-        if (state != null) {
-            var node = state.timeoutNode();
-            if (node != null) {
-                QUEUE.remove(node);
+        synchronized (AfkManager.class) {
+            var state = STATES.remove(player);
+            if (state != null) {
+                var node = state.timeoutNode();
+                if (node != null) {
+                    queue.remove(node);
+                }
             }
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public synchronized void onMove(final @NotNull PlayerMoveEvent event) {
+    public void onMove(final @NotNull PlayerMoveEvent event) {
         var player = event.getPlayer();
-        var state = STATES.get(player);
-        if (state != null) {
-            var oldLoc = state.lastLocation();
-            var newLoc = event.getTo();
-            if (!oldLoc.getWorld().equals(newLoc.getWorld()) || oldLoc.distanceSquared(newLoc) >= MIN_DIST_SQUARED) {
-                // player moved far enough, they are no longer AFK
-                setAfk(player, false);
+        synchronized (AfkManager.class) {
+            var state = STATES.get(player);
+            if (state != null) {
+                var oldLoc = state.lastLocation();
+                var newLoc = event.getTo();
+                if (!oldLoc.getWorld().equals(newLoc.getWorld())
+                    || oldLoc.distanceSquared(newLoc) >= MIN_DIST_SQUARED) {
+                    // player moved far enough, they are no longer AFK
+                    setAfk(player, false);
+                }
             }
         }
     }
@@ -142,18 +154,34 @@ public final class AfkManager implements Listener, Runnable {
      * Check for players to automatically set as AFK.
      */
     @Override
-    public synchronized void run() {
+    public void run() {
         var now = System.currentTimeMillis();
-        while (true) {
-            var node = QUEUE.peek();
-            if (node != null) {
-                var value = node.getValue();
-                if (value.time() + AFK_MS < now) {
-                    setAfk(value.player(), true);
-                    continue;
+        synchronized (AfkManager.class) {
+            while (true) {
+                var node = queue.peek();
+                if (node != null) {
+                    var value = node.getValue();
+                    if (value.time() + afkMs < now) {
+                        setAfk(value.player(), true);
+                        continue;
+                    }
                 }
+                return;
             }
-            return;
+        }
+    }
+
+    @Override
+    public void loadConfig() {
+        var time = Duration.ofSeconds(Configuration.getInt("afk.timeout")).toMillis();
+        synchronized (AfkManager.class) {
+            queue = new LinkedQueue<>();
+            for (var entry : STATES.entrySet()) {
+                var value = entry.getValue();
+                var node = queue.push(new AfkNode(entry.getKey()));
+                entry.setValue(new AfkState(value.lastLocation(), node));
+            }
+            afkMs = time;
         }
     }
 }

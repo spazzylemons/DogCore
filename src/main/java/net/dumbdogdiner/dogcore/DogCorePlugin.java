@@ -1,5 +1,6 @@
 package net.dumbdogdiner.dogcore;
 
+import com.google.common.base.Preconditions;
 import dev.jorel.commandapi.CommandAPI;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
+import net.dumbdogdiner.dogcore.listener.TabListManager;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
 import net.dumbdogdiner.dogcore.teleport.SpawnListener;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
@@ -17,19 +19,24 @@ import net.dumbdogdiner.dogcore.vault.DogEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public final class DogCorePlugin extends JavaPlugin {
+    /** The instance of this plugin. */
+    private static DogCorePlugin instance;
+
     @Override
     public void onEnable() {
+        instance = this;
+
         TeleportHelper.initSafeTeleport(this);
-        Database.init(this);
+        Database.init();
         DeathMessageRandomizer.init(this);
         BackManager.init(this);
         TpaManager.init(this);
+        TabListManager.init();
 
         Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
 
@@ -62,35 +69,15 @@ public final class DogCorePlugin extends JavaPlugin {
 
         NameFormatter.init(this);
 
-        getServer().getPluginManager().registerEvents(new CoreListener(this), this);
+        getServer().getPluginManager().registerEvents(new CoreListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnListener(), this);
-
-        removeVanillaOverrides(Bukkit.getConsoleSender());
 
         getLogger().info("doggy time");
     }
 
-    /**
-     * Get a string from the configuration file.
-     * @param key The path to search.
-     * @return The data in the configuration file.
-     */
-    public @NotNull String getConfigString(@NotNull final String key) {
-        var result = getConfig().getString(key);
-        if (result == null) {
-            throw new RuntimeException("missing value for " + key + " in config.yml");
-        }
-        return result;
-    }
-
-    /**
-     * Some Vanilla commands are disabled, to force using our implementation.
-     * This modifies the permissions of a command sender to remove them.
-     * @param sender The sender to remove the permissions from.
-     */
-    public void removeVanillaOverrides(@NotNull final CommandSender sender) {
-//        var attachment = sender.addAttachment(this);
-//        attachment.setPermission("minecraft.command.msg", false);
+    public static @NotNull DogCorePlugin getInstance() {
+        Preconditions.checkNotNull(instance);
+        return instance;
     }
 
     /**

@@ -3,7 +3,10 @@ package net.dumbdogdiner.dogcore.teleport;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
+import java.time.Duration;
 import java.util.Set;
+import net.dumbdogdiner.dogcore.config.Configurable;
+import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -18,11 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class TpaManager implements Listener, Runnable {
+public final class TpaManager implements Listener, Runnable, Configurable {
     private TpaManager() { }
 
     /** The time in which TPA expires. */
-    private static final long TPA_EXPIRE_MS = 120L * 1000L;
+    private static long tpaExpireMs;
 
     /** The time to repeat the maintenance task (Every minute). */
     private static final long MAINTENANCE_TICKS = 20L * 60L;
@@ -30,11 +33,10 @@ public final class TpaManager implements Listener, Runnable {
     private record TpaConnection(boolean here, long time) { }
 
     /** A network of users and their TPA requests. */
-    private static final MutableNetwork<UUID, LinkedQueue.Node<TpaConnection>> REQUEST_NETWORK
-        = NetworkBuilder.directed().build();
+    private static MutableNetwork<UUID, LinkedQueue.Node<TpaConnection>> requestNetwork;
 
     /** The head of the TPA timeout queue. */
-    private static final LinkedQueue<TpaConnection> TIMEOUT_QUEUE = new LinkedQueue<>();
+    private static LinkedQueue<TpaConnection> timeoutQueue;
 
     public static void init(final @NotNull Plugin plugin) {
         var instance = new TpaManager();
@@ -42,6 +44,8 @@ public final class TpaManager implements Listener, Runnable {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, instance, 0L, MAINTENANCE_TICKS);
         // register event to remove players that leave
         Bukkit.getPluginManager().registerEvents(instance, plugin);
+        // register configurable
+        Configuration.register(instance);
     }
 
     private static synchronized LinkedQueue.@Nullable Node<TpaConnection> getEdge(
@@ -49,7 +53,7 @@ public final class TpaManager implements Listener, Runnable {
         @NotNull final UUID to
     ) {
         try {
-            return REQUEST_NETWORK.edgeConnecting(from, to).orElse(null);
+            return requestNetwork.edgeConnecting(from, to).orElse(null);
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -58,8 +62,8 @@ public final class TpaManager implements Listener, Runnable {
     private static synchronized void performMaintenance() {
         var now = System.currentTimeMillis();
         while (true) {
-            var edge = TIMEOUT_QUEUE.peek();
-            if (edge == null || edge.getValue().time + TPA_EXPIRE_MS > now) {
+            var edge = timeoutQueue.peek();
+            if (edge == null || edge.getValue().time + tpaExpireMs > now) {
                 return;
             }
             removeEdge(edge);
@@ -68,8 +72,8 @@ public final class TpaManager implements Listener, Runnable {
 
     private static synchronized void removeIfUnused(@NotNull final UUID node) {
         try {
-            if (REQUEST_NETWORK.degree(node) == 0) {
-                REQUEST_NETWORK.removeNode(node);
+            if (requestNetwork.degree(node) == 0) {
+                requestNetwork.removeNode(node);
             }
         } catch (IllegalArgumentException ignored) {
         }
@@ -77,16 +81,16 @@ public final class TpaManager implements Listener, Runnable {
 
     private static synchronized void removeEdge(@NotNull final LinkedQueue.Node<TpaConnection> edge) {
         // remove from the queue
-        TIMEOUT_QUEUE.remove(edge);
+        timeoutQueue.remove(edge);
         // check what nodes were connected to this edge
         EndpointPair<UUID> pair;
         try {
-            pair = REQUEST_NETWORK.incidentNodes(edge);
+            pair = requestNetwork.incidentNodes(edge);
         } catch (IllegalArgumentException e) {
             pair = null;
         }
         // remove the edge
-        REQUEST_NETWORK.removeEdge(edge);
+        requestNetwork.removeEdge(edge);
         // remove nodes if unused
         if (pair != null) {
             removeIfUnused(pair.nodeU());
@@ -100,8 +104,8 @@ public final class TpaManager implements Listener, Runnable {
         @NotNull final TpaConnection connection
     ) {
         performMaintenance();
-        var edge = TIMEOUT_QUEUE.push(connection);
-        REQUEST_NETWORK.addEdge(from, to, edge);
+        var edge = timeoutQueue.push(connection);
+        requestNetwork.addEdge(from, to, edge);
     }
 
     private static synchronized @Nullable TpaConnection takeRequest(
@@ -160,7 +164,7 @@ public final class TpaManager implements Listener, Runnable {
     private static synchronized void removePlayer(@NotNull final UUID uuid) {
         Set<LinkedQueue.Node<TpaConnection>> edges;
         try {
-            edges = REQUEST_NETWORK.incidentEdges(uuid);
+            edges = requestNetwork.incidentEdges(uuid);
         } catch (IllegalArgumentException e) {
             // nothing to remove
             return;
@@ -218,5 +222,15 @@ public final class TpaManager implements Listener, Runnable {
     public void run() {
         // When the TPA manager is ticked, we will perform maintenance on the network and queue.
         performMaintenance();
+    }
+
+    @Override
+    public void loadConfig() {
+        var expireMs = Duration.ofSeconds(Configuration.getInt("tpa.timeout")).toMillis();
+        synchronized (TpaManager.class) {
+            tpaExpireMs = expireMs;
+            requestNetwork = NetworkBuilder.directed().build();
+            timeoutQueue = new LinkedQueue<>();
+        }
     }
 }

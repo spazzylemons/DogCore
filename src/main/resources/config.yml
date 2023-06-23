@@ -1,0 +1,12 @@
+db:
+  username: "AzureDiamond"
+  password: "hunter2"
+  port: 5432
+  database: "database"
+tpa:
+  timeout: 120
+afk:
+  timeout: 300
+tablist:
+  header: "<gold><bold>Dumb Dog Diner<reset><newline><yellow><ms> ms   <tps> TPS<reset>"
+  footer: "<dark_purple><italic>||<reset> <purple><bold>dumbdogdiner.net<reset> <dark_purple><italic>||<reset>"

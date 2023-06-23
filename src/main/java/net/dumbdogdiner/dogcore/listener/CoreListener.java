@@ -1,7 +1,6 @@
 package net.dumbdogdiner.dogcore.listener;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
-import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
@@ -18,20 +17,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.jetbrains.annotations.NotNull;
 
 public final class CoreListener implements Listener {
-    /** The plugin. */
-    private final @NotNull DogCorePlugin plugin;
-
-    /**
-     * Create a listener.
-     * @param p The plugin to use for various tasks.
-     */
-    public CoreListener(@NotNull final DogCorePlugin p) {
-        plugin = p;
-    }
-
     /**
      * Formats chat messages.
      * @param event Event to handle.
@@ -64,8 +51,6 @@ public final class CoreListener implements Listener {
         var firstJoin = User.register(player).toCompletableFuture().join();
         // set their tab list name
         NameFormatter.refreshPlayerName(player).toCompletableFuture().join();
-        // remove access to some vanilla commands
-        plugin.removeVanillaOverrides(player);
         // announce join
         var name = player.displayName();
         event.joinMessage(Messages.get("chat.join", name));

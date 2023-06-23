@@ -30,6 +30,9 @@ public final class Permissions {
     /** The dogcore.nick.admin permission. */
     public static final String NICK_ADMIN = "dogcore.nick.admin";
 
+    /** The dogcore.reload permission. */
+    public static final String RELOAD = "dogcore.reload";
+
     /** The dogcore.snoop permission. */
     public static final String SNOOP = "dogcore.snoop";
 
