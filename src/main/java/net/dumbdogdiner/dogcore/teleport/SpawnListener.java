@@ -14,11 +14,7 @@ public final class SpawnListener implements Listener {
         var location = HomeManager.getHome(player);
         if (location != null) {
             // find safe location by home
-            location = TeleportHelper.getSafeTeleport(player, location);
-        }
-        // if we have a spawn location, use that
-        if (location != null) {
-            event.setRespawnLocation(location);
+            event.setRespawnLocation(TeleportHelper.getSafeTeleport(location));
         } else if (!event.isBedSpawn() && !event.isAnchorSpawn()) {
             // if the player has a bed or anchor, use that, otherwise use exact spawn point
             // no random offset like in vanilla!
