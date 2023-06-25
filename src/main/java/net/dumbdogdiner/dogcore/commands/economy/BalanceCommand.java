@@ -6,9 +6,9 @@ import dev.jorel.commandapi.annotations.Default;
 import dev.jorel.commandapi.annotations.Permission;
 import dev.jorel.commandapi.annotations.arguments.AOfflinePlayerArgument;
 import net.dumbdogdiner.dogcore.Permissions;
+import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
-import net.kyori.adventure.text.Component;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -23,7 +23,7 @@ public final class BalanceCommand {
     @Default
     public static void balance(final @NotNull Player sender) {
         User.lookupCommand(sender, sender, user -> user.getBalance().thenAccept(balance ->
-            sender.sendMessage(Messages.get("commands.balance.query", Component.text(balance)))));
+            sender.sendMessage(Messages.get("commands.balance.query", EconomyFormatter.formatCurrency(balance)))));
     }
 
     @Default
@@ -33,6 +33,10 @@ public final class BalanceCommand {
     ) {
         User.lookupCommand(player, sender, user -> user.getBalance().thenAccept(balance ->
             user.formattedName().thenAccept(name ->
-                sender.sendMessage(Messages.get("commands.balance.query.other", name, Component.text(balance))))));
+                sender.sendMessage(Messages.get(
+                    "commands.balance.query.other",
+                    name,
+                    EconomyFormatter.formatCurrency(balance)
+                )))));
     }
 }

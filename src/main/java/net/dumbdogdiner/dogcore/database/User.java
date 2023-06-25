@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
@@ -177,6 +178,11 @@ public final class User {
                 }
                 throw e;
             }
+            // tell the player about the money that they received
+            var player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                player.sendMessage(Messages.get("eco.received", EconomyFormatter.formatCurrency(amount)));
+            }
             return true;
         });
     }
@@ -217,6 +223,11 @@ public final class User {
                     return false;
                 }
                 throw e;
+            }
+            // tell the player about the money that they received
+            var player = Bukkit.getPlayer(other.uuid);
+            if (player != null) {
+                player.sendMessage(Messages.get("eco.received", EconomyFormatter.formatCurrency(amount)));
             }
             return true;
         });

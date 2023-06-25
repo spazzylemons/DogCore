@@ -6,9 +6,9 @@ import dev.jorel.commandapi.annotations.Default;
 import dev.jorel.commandapi.annotations.Permission;
 import dev.jorel.commandapi.annotations.arguments.AIntegerArgument;
 import net.dumbdogdiner.dogcore.Permissions;
+import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
-import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,11 @@ public final class BalanceTopCommand {
         User.top(page).thenAccept(entries -> {
             for (var entry : entries) {
                 sender.sendMessage(
-                    Messages.get("commands.balancetop.entry", entry.name(), Component.text(entry.amount())));
+                    Messages.get(
+                        "commands.balancetop.entry",
+                        entry.name(),
+                        EconomyFormatter.formatCurrency(entry.amount())
+                    ));
             }
         });
     }

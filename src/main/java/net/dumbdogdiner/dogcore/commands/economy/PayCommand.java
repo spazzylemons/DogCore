@@ -6,9 +6,9 @@ import dev.jorel.commandapi.annotations.Permission;
 import dev.jorel.commandapi.annotations.arguments.ALongArgument;
 import dev.jorel.commandapi.annotations.arguments.AOfflinePlayerArgument;
 import net.dumbdogdiner.dogcore.Permissions;
+import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
-import net.kyori.adventure.text.Component;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,11 @@ public final class PayCommand {
             future.thenAccept(success -> {
                 if (success) {
                     to.formattedName().thenAccept(name -> {
-                        var message = Messages.get("commands.pay.success", Component.text(amount), name);
+                        var message = Messages.get(
+                            "commands.pay.success",
+                            EconomyFormatter.formatCurrency(amount),
+                            name
+                        );
                         sender.sendMessage(message);
                     });
                 } else {
