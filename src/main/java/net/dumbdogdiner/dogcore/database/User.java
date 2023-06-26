@@ -20,11 +20,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jooq.SortOrder;
 import org.jooq.exception.DataAccessException;
 
 //CHECKSTYLE:OFF
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
+import org.jooq.impl.DSL;
 //CHECKSTYLE:ON
 
 public final class User {
@@ -40,7 +40,7 @@ public final class User {
     /** The error code returned by PostgreSQL when a check fails. */
     private static final String CHECK_VIOLATION = "23514";
 
-    public record BaltopEntry(Component name, long amount) { }
+    public record BaltopEntry(int index, @NotNull Component name, long amount) { }
 
     /** The UUID of this user. */
     private final @NotNull UUID uuid;
@@ -430,16 +430,17 @@ public final class User {
     ) {
         // TODO: improve efficiency of query
         return Database.execute(ctx -> ctx.dsl()
-            .select(USERS.UNIQUE_ID, USERS.BALANCE)
+            .select(DSL.rowNumber().over(), USERS.UNIQUE_ID, USERS.BALANCE)
             .from(USERS)
-            .orderBy(USERS.BALANCE.sort(SortOrder.DESC))
+            .orderBy(USERS.BALANCE.desc())
             .limit((long) (page - 1) * PAGE_SIZE, PAGE_SIZE)
             .fetch(row -> {
-                var username = row.value1();
-                var balance = row.value2();
+                var index = row.value1();
+                var username = row.value2();
+                var balance = row.value3();
                 return new User(username)
                     .formattedName()
-                    .thenApply(name -> new BaltopEntry(name, balance));
+                    .thenApply(name -> new BaltopEntry(index, name, balance));
             })).thenCompose(futures -> {
                 // https://stackoverflow.com/questions/59108125/
                 var array = futures.toArray(new CompletableFuture[0]);

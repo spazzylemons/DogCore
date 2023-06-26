@@ -68,9 +68,7 @@ public final class Database {
      * @return A future that returns a value.
      * @param <T> The type of value to return.
      */
-    public static <T> @NotNull CompletionStage<T> execute(
-        @NotNull final TransactionalCallable<T> f
-    ) {
+    public static <T> @NotNull CompletionStage<T> execute(final @NotNull TransactionalCallable<T> f) {
         return create.transactionResultAsync(f);
     }
 
@@ -79,9 +77,7 @@ public final class Database {
      * @param f The transaction to execute.
      * @return A future that completes when the transaction is finished.
      */
-    public static @NotNull CompletionStage<Void> executeUpdate(
-        @NotNull final TransactionalRunnable f
-    ) {
+    public static @NotNull CompletionStage<Void> executeUpdate(final @NotNull TransactionalRunnable f) {
         return create.transactionAsync(f);
     }
 }
