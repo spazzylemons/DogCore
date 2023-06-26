@@ -8,7 +8,11 @@ api-version: "1.20"
 depend:
   - CommandAPI
   - LuckPerms
+  - ProtocolLib
   - Vault
+libraries:
+  - "org.postgresql:postgresql:42.6.0"
+  - "org.jooq:jooq:3.18.5"
 permissions:
   dogcore.back:
     description: "Allows instantly returning to where you died."

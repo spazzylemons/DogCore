@@ -1,5 +1,7 @@
-package net.dumbdogdiner.dogcore.teleport;
+package net.dumbdogdiner.dogcore.listener;
 
+import net.dumbdogdiner.dogcore.teleport.HomeManager;
+import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

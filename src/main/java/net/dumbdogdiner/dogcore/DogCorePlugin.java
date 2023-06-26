@@ -1,5 +1,10 @@
 package net.dumbdogdiner.dogcore;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import dev.jorel.commandapi.CommandAPI;
 import java.io.FileInputStream;
@@ -15,7 +20,7 @@ import net.dumbdogdiner.dogcore.listener.MOTDListener;
 import net.dumbdogdiner.dogcore.listener.PlayerListNameListener;
 import net.dumbdogdiner.dogcore.listener.TabListManager;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
-import net.dumbdogdiner.dogcore.teleport.SpawnListener;
+import net.dumbdogdiner.dogcore.listener.SpawnListener;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
 import net.dumbdogdiner.dogcore.vault.DogEconomy;
@@ -34,6 +39,8 @@ public final class DogCorePlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
+
         TeleportHelper.initSafeTeleport(this);
         Database.init();
         DeathMessageRandomizer.init(this);
@@ -41,8 +48,6 @@ public final class DogCorePlugin extends JavaPlugin {
         TpaManager.init(this);
         TabListManager.init();
         PlayerListNameListener.init();
-
-        Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
 
         // goodbye, /tell!
         CommandAPI.unregister("tell");
@@ -78,6 +83,19 @@ public final class DogCorePlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MOTDListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnListener(), this);
 
+        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
+            this,
+            ListenerPriority.NORMAL,
+            PacketType.Play.Server.SERVER_DATA
+        ) {
+            @Override
+            public void onPacketSending(final @NotNull PacketEvent event) {
+                var packet = event.getPacket();
+                // lie about secure chat, this hides the popup
+                packet.getBooleans().write(0, true);
+            }
+        });
+
         getLogger().info("doggy time");
     }
 
@@ -93,5 +111,12 @@ public final class DogCorePlugin extends JavaPlugin {
      */
     public static @NotNull NamespacedKey key(@NotNull final String key) {
         return new NamespacedKey("dogcore", key);
+    }
+
+    public static @NotNull Economy getEconomy() {
+        var registration = Bukkit.getServicesManager().getRegistration(Economy.class);
+        // we supplied it, so it cannot be null
+        assert registration != null;
+        return registration.getProvider();
     }
 }

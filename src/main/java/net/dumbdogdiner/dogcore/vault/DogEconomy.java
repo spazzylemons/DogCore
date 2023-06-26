@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import net.dumbdogdiner.dogcore.config.Configurable;
+import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.database.User;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -11,9 +13,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 @SuppressWarnings({"deprecation", "RedundantSuppression"})
-public final class DogEconomy implements Economy {
+public final class DogEconomy implements Economy, Configurable {
     /** The maximum amount stored for an account. */
     private static final long MAX_AMOUNT = 9007199254740992L;
+
+    /** The name of the currency, singular. */
+    private String singularName;
+
+    /** The name of the currency, plural. */
+    private String pluralName;
+
+    public DogEconomy() {
+        Configuration.register(this);
+    }
 
     @Override
     public boolean isEnabled() {
@@ -42,12 +54,12 @@ public final class DogEconomy implements Economy {
 
     @Override
     public String currencyNamePlural() {
-        return "beans";
+        return pluralName;
     }
 
     @Override
     public String currencyNameSingular() {
-        return "bean";
+        return singularName;
     }
 
     @Override
@@ -297,5 +309,13 @@ public final class DogEconomy implements Economy {
 
     private static EconomyResponse unimplemented() {
         return new EconomyResponse(0.0, 0.0, EconomyResponse.ResponseType.NOT_IMPLEMENTED, null);
+    }
+
+    @Override
+    public void loadConfig() {
+        var singular = Configuration.getString("economy.singular");
+        var plural = Configuration.getString("economy.plural");
+        singularName = singular;
+        pluralName = plural;
     }
 }

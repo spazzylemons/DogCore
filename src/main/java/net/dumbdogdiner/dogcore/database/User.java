@@ -3,14 +3,17 @@ package net.dumbdogdiner.dogcore.database;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.dumbdogdiner.dogcore.chat.MiscFormatter;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
+import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.event.DailyLoginEvent;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
@@ -21,10 +24,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 //CHECKSTYLE:OFF
 import static net.dumbdogdiner.dogcore.database.schema.Tables.*;
-import org.jooq.impl.DSL;
 //CHECKSTYLE:ON
 
 public final class User {
@@ -39,6 +42,12 @@ public final class User {
 
     /** The error code returned by PostgreSQL when a check fails. */
     private static final String CHECK_VIOLATION = "23514";
+
+    /** Cached users for online players. */
+    private static final Map<Player, User> CACHE = new WeakHashMap<>();
+
+    /** The initial balance for users. */
+    private static long initialBalance;
 
     public record BaltopEntry(int index, @NotNull Component name, long amount) { }
 
@@ -335,9 +344,27 @@ public final class User {
     public static @NotNull CompletionStage<@Nullable User> lookup(
         @NotNull final UUID uuid
     ) {
+        var player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            var fromCache = CACHE.get(player);
+            if (fromCache != null) {
+                return CompletableFuture.completedFuture(fromCache);
+            }
+        }
+
         return Database.execute(ctx -> ctx.dsl()
                 .fetchCount(USERS, USERS.UNIQUE_ID.eq(uuid)) != 0)
-            .thenApply(exists -> exists ? new User(uuid) : null);
+            .thenApply(exists -> {
+                if (exists) {
+                    var result = new User(uuid);
+                    if (player != null) {
+                        CACHE.put(player, result);
+                    }
+                    return result;
+                } else {
+                    return null;
+                }
+            });
     }
 
     /**
@@ -412,8 +439,8 @@ public final class User {
                     .execute();
             } else {
                 dsl.insertInto(USERS)
-                    .columns(USERS.UNIQUE_ID, USERS.USERNAME)
-                    .values(uuid, name)
+                    .columns(USERS.UNIQUE_ID, USERS.USERNAME, USERS.BALANCE)
+                    .values(uuid, name, initialBalance)
                     .execute();
             }
             return !exists;
@@ -462,5 +489,11 @@ public final class User {
             .fetch(row -> Bukkit.getPlayer(row.value1()))
             .stream().filter(Objects::nonNull)
             .collect(Collectors.toList()));
+    }
+
+    public static void init() {
+        Configuration.register(() -> {
+            initialBalance = Configuration.getInt("economy.initial");
+        });
     }
 }

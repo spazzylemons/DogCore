@@ -2,6 +2,7 @@ package net.dumbdogdiner.dogcore.chat;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +10,13 @@ public final class MiscFormatter {
     private MiscFormatter() { }
 
     public static @NotNull Component formatCurrency(final long amount) {
-        return Component.text(String.format("%,d %s", amount, amount == 1 ? "bean" : "beans"));
+        String name;
+        if (amount == 1L) {
+            name = DogCorePlugin.getEconomy().currencyNameSingular();
+        } else {
+            name = DogCorePlugin.getEconomy().currencyNamePlural();
+        }
+        return Component.text(String.format("%,d %s", amount, name));
     }
 
     private static @NotNull String durationAmount(final long i, final @NotNull String v) {
@@ -65,6 +72,6 @@ public final class MiscFormatter {
                 }
             }
         }
-        return Component.text(String.join("", result.toArray(new String[0])));
+        return Component.text(String.join("", result.toArray(String[]::new)));
     }
 }

@@ -1,16 +1,6 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.3.2'
-    }
-}
-
 plugins {
     id 'checkstyle'
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'nu.studer.jooq' version '8.2'
 }
 
@@ -21,43 +11,39 @@ repositories {
     mavenCentral()
     maven { url 'https://jitpack.io/' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://repo.dmulloy2.net/repository/public/' }
 }
+
+final var commandApiVersion = '9.0.3'
+final var jooqVersion = '3.18.5'
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
 
     // commands
-    compileOnly 'dev.jorel:commandapi-bukkit-core:9.0.3'
-    compileOnly 'dev.jorel:commandapi-annotations:9.0.3'
-    annotationProcessor 'dev.jorel:commandapi-annotations:9.0.3'
+    compileOnly "dev.jorel:commandapi-bukkit-core:${commandApiVersion}"
+    compileOnly "dev.jorel:commandapi-annotations:${commandApiVersion}"
+    annotationProcessor "dev.jorel:commandapi-annotations:${commandApiVersion}"
 
     // to allow other plugins to interface with economy
     compileOnly "com.github.MilkBowl:VaultAPI:1.7"
 
     // database
-    implementation 'org.postgresql:postgresql:42.5.4'
-    implementation 'org.jooq:jooq:3.18.4'
-    // removes a warning, and helps proguard
+    compileOnly 'org.postgresql:postgresql:42.6.0'
+    compileOnly "org.jooq:jooq:${jooqVersion}"
     compileOnly 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
 
     // permissions
     compileOnly 'net.luckperms:api:5.4'
 
-    jooqGenerator 'org.jooq:jooq-meta-extensions:3.18.4'
-}
+    // hide insecure chat popup
+    compileOnly 'com.comphenix.protocol:ProtocolLib:5.0.0'
 
-tasks {
-    build {
-        dependsOn 'shadowJar'
-    }
-
-    shadowJar {
-        archiveClassifier = ''
-    }
+    jooqGenerator "org.jooq:jooq-meta-extensions:${jooqVersion}"
 }
 
 jooq {
-    version = '3.18.4'
+    version = jooqVersion
 
     configurations {
         main {
@@ -84,16 +70,4 @@ jooq {
 checkstyle {
     // tell checkstyle to only check our source code, not the generated files
     checkstyleMain.source = 'src/main/java'
-}
-
-// this doesn't work at the moment - the JAR file does not run correctly
-task proguard(type: proguard.gradle.ProGuardTask, dependsOn: build) {
-    configuration("${rootDir}/proguard.pro")
-    injars jar.archiveFile.map {"$it" }
-
-    for (file in configurations.compileClasspath.files) {
-        libraryjars "${file}"
-    }
-
-    outjars "${buildDir}/libs/proguard-obfuscated.jar"
 }

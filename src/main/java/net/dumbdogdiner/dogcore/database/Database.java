@@ -1,6 +1,8 @@
 package net.dumbdogdiner.dogcore.database;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -41,7 +43,12 @@ public final class Database {
         }
 
         Connection conn;
-        var url = "jdbc:postgresql://localhost:" + port + "/" + database;
+        String url;
+        try {
+            url = new URI("jdbc:postgresql", null, "localhost", port, "/" + database, null, null).toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         try {
             conn = DriverManager.getConnection(url, username, password);
             conn.setAutoCommit(false);
@@ -60,6 +67,8 @@ public final class Database {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        User.init();
     }
 
     /**

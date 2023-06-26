@@ -12,6 +12,10 @@ tablist:
   footer: "<dark_purple><italic>||<reset> <light_purple><bold>dumbdogdiner.net<reset> <dark_purple><italic>||<reset>"
 daily:
   reward: 20
+economy:
+  initial: 200
+  singular: "bean"
+  plural: "beans"
 motd:
   line1: "<rainbow>Dumb Dog Diner SMP [1.20.1]"
   line2:
