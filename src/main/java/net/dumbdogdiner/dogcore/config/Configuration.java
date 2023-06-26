@@ -1,6 +1,7 @@
 package net.dumbdogdiner.dogcore.config;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import net.dumbdogdiner.dogcore.DogCorePlugin;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,10 @@ public final class Configuration {
             throw missingConfig(path);
         }
         return result;
+    }
+
+    public static @NotNull List<@NotNull String> getStrings(final @NotNull String path) {
+        return DogCorePlugin.getInstance().getConfig().getStringList(path);
     }
 
     public static int getInt(final @NotNull String path) {

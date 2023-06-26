@@ -12,3 +12,9 @@ tablist:
   footer: "<dark_purple><italic>||<reset> <light_purple><bold>dumbdogdiner.net<reset> <dark_purple><italic>||<reset>"
 daily:
   reward: 20
+motd:
+  line1: "<rainbow>Dumb Dog Diner SMP [1.20.1]"
+  line2:
+    - "<blue>Adventure awaits!"
+    - "<blue>All creatures welcome!"
+    - "<blue>What would you like to order?"
