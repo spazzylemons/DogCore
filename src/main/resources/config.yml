@@ -10,3 +10,5 @@ afk:
 tablist:
   header: "<gold><bold>Dumb Dog Diner<reset><newline><yellow><ms> ms   <tps> TPS<reset>"
   footer: "<dark_purple><italic>||<reset> <light_purple><bold>dumbdogdiner.net<reset> <dark_purple><italic>||<reset>"
+daily:
+  reward: 20

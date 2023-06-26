@@ -1,6 +1,7 @@
 package net.dumbdogdiner.dogcore.listener;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.util.concurrent.CompletableFuture;
 import net.dumbdogdiner.dogcore.Permissions;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
@@ -58,6 +59,14 @@ public final class CoreListener implements Listener {
         if (firstJoin) {
             Bukkit.broadcast(Messages.get("chat.welcome", name));
         }
+        // check daily login
+        User.lookup(player).thenCompose(user -> {
+            if (user != null) {
+                return user.checkDailyLogin();
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        });
     }
 
     /**

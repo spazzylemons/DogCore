@@ -6,7 +6,7 @@ import dev.jorel.commandapi.annotations.Default;
 import dev.jorel.commandapi.annotations.Permission;
 import dev.jorel.commandapi.annotations.arguments.AIntegerArgument;
 import net.dumbdogdiner.dogcore.Permissions;
-import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
+import net.dumbdogdiner.dogcore.chat.MiscFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import org.bukkit.command.CommandSender;
@@ -34,7 +34,7 @@ public final class BalanceTopCommand {
                     Messages.get(
                         "commands.balancetop.entry",
                         entry.name(),
-                        EconomyFormatter.formatCurrency(entry.amount())
+                        MiscFormatter.formatCurrency(entry.amount())
                     ));
             }
         });

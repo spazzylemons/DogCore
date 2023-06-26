@@ -6,7 +6,7 @@ import dev.jorel.commandapi.annotations.Permission;
 import dev.jorel.commandapi.annotations.arguments.ALongArgument;
 import dev.jorel.commandapi.annotations.arguments.AOfflinePlayerArgument;
 import net.dumbdogdiner.dogcore.Permissions;
-import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
+import net.dumbdogdiner.dogcore.chat.MiscFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import org.bukkit.OfflinePlayer;
@@ -31,7 +31,7 @@ public final class PayCommand {
                     to.formattedName().thenAccept(name -> {
                         var message = Messages.get(
                             "commands.pay.success",
-                            EconomyFormatter.formatCurrency(amount),
+                            MiscFormatter.formatCurrency(amount),
                             name
                         );
                         sender.sendMessage(message);

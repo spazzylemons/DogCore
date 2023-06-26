@@ -1,6 +1,7 @@
 package net.dumbdogdiner.dogcore.database;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -8,8 +9,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import net.dumbdogdiner.dogcore.chat.EconomyFormatter;
+import net.dumbdogdiner.dogcore.chat.MiscFormatter;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
+import net.dumbdogdiner.dogcore.event.DailyLoginEvent;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -157,6 +159,13 @@ public final class User {
         });
     }
 
+    private void sendPaymentNotification(final long amount) {
+        var player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            player.sendMessage(Messages.get("eco.received", MiscFormatter.formatCurrency(amount)));
+        }
+    }
+
     /**
      * Give or take money from this player.
      * Fails if balance would overflow or be negative.
@@ -179,10 +188,7 @@ public final class User {
                 throw e;
             }
             // tell the player about the money that they received
-            var player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                player.sendMessage(Messages.get("eco.received", EconomyFormatter.formatCurrency(amount)));
-            }
+            sendPaymentNotification(amount);
             return true;
         });
     }
@@ -225,10 +231,7 @@ public final class User {
                 throw e;
             }
             // tell the player about the money that they received
-            var player = Bukkit.getPlayer(other.uuid);
-            if (player != null) {
-                player.sendMessage(Messages.get("eco.received", EconomyFormatter.formatCurrency(amount)));
-            }
+            sendPaymentNotification(amount);
             return true;
         });
     }
@@ -297,6 +300,31 @@ public final class User {
                 .get(0))
             .thenCompose(row -> NameFormatter.formatUsername(uuid, row.value1(), row.value2()))
             .toCompletableFuture();
+    }
+
+    public @NotNull CompletionStage<Void> checkDailyLogin() {
+        return Database.executeUpdate(ctx -> {
+            var dsl = ctx.dsl();
+            var lastRewardDate = dsl.select(USERS.LAST_LOGIN_DATE)
+                .from(USERS)
+                .where(USERS.UNIQUE_ID.eq(uuid))
+                .forUpdate()
+                .fetch()
+                .get(0)
+                .value1();
+            var today = LocalDate.now();
+            if (lastRewardDate == null || today.isAfter(lastRewardDate)) {
+                dsl.update(USERS)
+                    .set(USERS.LAST_LOGIN_DATE, today)
+                    .where(USERS.UNIQUE_ID.eq(uuid))
+                    .execute();
+                // fire login event
+                var player = Bukkit.getPlayer(uuid);
+                if (player != null) {
+                    Bukkit.getPluginManager().callEvent(new DailyLoginEvent(player));
+                }
+            }
+        });
     }
 
     /**

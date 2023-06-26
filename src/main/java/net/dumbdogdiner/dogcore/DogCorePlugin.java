@@ -10,6 +10,7 @@ import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
+import net.dumbdogdiner.dogcore.listener.DailyRewardListener;
 import net.dumbdogdiner.dogcore.listener.PlayerListNameListener;
 import net.dumbdogdiner.dogcore.listener.TabListManager;
 import net.dumbdogdiner.dogcore.teleport.BackManager;
@@ -72,6 +73,7 @@ public final class DogCorePlugin extends JavaPlugin {
         NameFormatter.init(this);
 
         getServer().getPluginManager().registerEvents(new CoreListener(), this);
+        getServer().getPluginManager().registerEvents(new DailyRewardListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnListener(), this);
 
         getLogger().info("doggy time");
