@@ -16,6 +16,7 @@ import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.listener.CoreListener;
 import net.dumbdogdiner.dogcore.listener.DailyRewardListener;
+import net.dumbdogdiner.dogcore.listener.HatListener;
 import net.dumbdogdiner.dogcore.listener.MOTDListener;
 import net.dumbdogdiner.dogcore.listener.PlayerListNameListener;
 import net.dumbdogdiner.dogcore.listener.TabListManager;
@@ -49,8 +50,11 @@ public final class DogCorePlugin extends JavaPlugin {
         TabListManager.init();
         PlayerListNameListener.init();
 
-        // goodbye, /tell!
+        // remove commands that we replace
         CommandAPI.unregister("tell");
+        CommandAPI.unregister("msg");
+        CommandAPI.unregister("w");
+        CommandAPI.unregister("me");
 
         try (var stream = new FileInputStream(getFile())) {
             try (var zip = new ZipInputStream(stream)) {
@@ -80,6 +84,7 @@ public final class DogCorePlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new CoreListener(), this);
         getServer().getPluginManager().registerEvents(new DailyRewardListener(), this);
+        getServer().getPluginManager().registerEvents(new HatListener(), this);
         getServer().getPluginManager().registerEvents(new MOTDListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnListener(), this);
 

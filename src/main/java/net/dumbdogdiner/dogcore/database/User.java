@@ -491,6 +491,34 @@ public final class User {
             .collect(Collectors.toList()));
     }
 
+    public static @NotNull CompletionStage<@Nullable Component> nameIfNotMuted(final @NotNull CommandSender sender) {
+        CompletionStage<Boolean> isMutedFuture;
+        if (sender instanceof Player p) {
+            var future = new CompletableFuture<Boolean>();
+            isMutedFuture = future;
+            User.lookupCommand(
+                p,
+                sender,
+                user -> user.isMuted().thenAccept(future::complete),
+                () -> future.complete(false)
+            );
+        } else {
+            isMutedFuture = CompletableFuture.completedFuture(false);
+        }
+        return isMutedFuture.thenApply(isMuted -> {
+            if (isMuted) {
+                sender.sendMessage(Messages.get("error.muted"));
+                return null;
+            }
+
+            if (sender instanceof Player p) {
+                return p.displayName();
+            } else {
+                return sender.name();
+            }
+        });
+    }
+
     public static void init() {
         Configuration.register(() -> {
             initialBalance = Configuration.getInt("economy.initial");

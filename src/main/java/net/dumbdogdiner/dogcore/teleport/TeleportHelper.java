@@ -141,10 +141,9 @@ public final class TeleportHelper {
         if (block.isCollidable() || HARMFUL_PASSABLE.contains(block.getType())) {
             return false;
         }
-        // check that the block above won't hurt us
-        // it's okay if it's solid because we'll crawl
-        var above = world.getBlockAt(x, y + 1, z);
-        if (HARMFUL_PASSABLE.contains(above.getType())) {
+        // check that the block above is air or water
+        var above = world.getBlockAt(x, y + 1, z).getType();
+        if (above != Material.AIR && above != Material.WATER) {
             return false;
         }
         // check that the block below won't hurt us

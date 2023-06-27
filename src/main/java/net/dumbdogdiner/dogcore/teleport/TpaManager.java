@@ -147,9 +147,9 @@ public final class TpaManager implements Listener, Runnable, Configurable {
 
         from.sendMessage(Messages.get("commands.tpa.sent", toName));
         var accept = Messages.get("commands.tpa.accept")
-            .clickEvent(ClickEvent.runCommand("/tpaccept ${from.name}"));
+            .clickEvent(ClickEvent.runCommand("/tpaccept " + from.getName()));
         var deny = Messages.get("commands.tpa.deny")
-            .clickEvent(ClickEvent.runCommand("/tpdeny ${from.name}"));
+            .clickEvent(ClickEvent.runCommand("/tpdeny " + from.getName()));
         if (here) {
             to.sendMessage(Messages.get("commands.tpahere.received", fromName, accept, deny));
         } else {

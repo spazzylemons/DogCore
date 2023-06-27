@@ -3,10 +3,10 @@ package net.dumbdogdiner.dogcore.commands;
 import dev.jorel.commandapi.annotations.Alias;
 import dev.jorel.commandapi.annotations.Command;
 import dev.jorel.commandapi.annotations.Default;
+import dev.jorel.commandapi.annotations.arguments.AEntitySelectorArgument;
 import dev.jorel.commandapi.annotations.arguments.AGreedyStringArgument;
-import dev.jorel.commandapi.annotations.arguments.APlayerArgument;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.Collection;
+import net.dumbdogdiner.dogcore.chat.MiscFormatter;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.kyori.adventure.text.Component;
@@ -22,51 +22,29 @@ public final class TellCommand {
     @Default
     public static void tell(
         final @NotNull CommandSender sender,
-        final @NotNull @APlayerArgument Player player,
+        final @NotNull @AEntitySelectorArgument.ManyPlayers Collection<Player> players,
         final @NotNull @AGreedyStringArgument String message
     ) {
-        // check if muted
-        CompletionStage<Boolean> isMutedFuture;
-        if (sender instanceof Player p) {
-            var future = new CompletableFuture<Boolean>();
-            isMutedFuture = future;
-            User.lookupCommand(
-                p,
-                sender,
-                user -> user.isMuted().thenAccept(future::complete),
-                () -> future.complete(false)
-            );
-        } else {
-            isMutedFuture = CompletableFuture.completedFuture(false);
-        }
-        isMutedFuture.thenAccept(isMuted -> {
-            if (isMuted) {
-                sender.sendMessage(Messages.get("error.muted"));
-                return;
-            }
+        User.nameIfNotMuted(sender).thenAccept(name -> {
+            if (name != null) {
+                var receiverName = MiscFormatter.playerCollection(players);
 
-            Component senderName;
-            if (sender instanceof Player p) {
-                senderName = p.displayName();
-            } else {
-                senderName = sender.name();
-            }
-
-            var receiverName = player.displayName();
-
-            var messageComponent = Component.text(message);
-            sender.sendMessage(Messages.get("chat.tell.outgoing", receiverName, messageComponent));
-            player.sendMessage(Messages.get("chat.tell.incoming", senderName, messageComponent));
-
-            User.spies().thenAccept(spies -> {
-                if (!spies.isEmpty()) {
-                    var spyMessage = Messages.get("chat.tell.spy", senderName, receiverName, messageComponent);
-
-                    for (var spy : spies) {
-                        spy.sendMessage(spyMessage);
-                    }
+                var messageComponent = Component.text(message);
+                sender.sendMessage(Messages.get("chat.tell.outgoing", receiverName, messageComponent));
+                for (var player : players) {
+                    player.sendMessage(Messages.get("chat.tell.incoming", name, messageComponent));
                 }
-            });
+
+                User.spies().thenAccept(spies -> {
+                    if (!spies.isEmpty()) {
+                        var spyMessage = Messages.get("chat.tell.spy", name, receiverName, messageComponent);
+
+                        for (var spy : spies) {
+                            spy.sendMessage(spyMessage);
+                        }
+                    }
+                });
+            }
         });
     }
 }

@@ -29,8 +29,14 @@ permissions:
   dogcore.enderchest:
     description: "Allows opening your ender chest using a command."
     default: op
+  dogcore.hat:
+    description: "Allows putting non-helmet blocks in your helmet slot."
+    default: true
   dogcore.home:
     description: "Allows setting, deleting, and teleporting to a home."
+    default: true
+  dogcore.me:
+    description: "Allows the /me command."
     default: true
   dogcore.mute:
     description: "Allows muting and unmuting other players."

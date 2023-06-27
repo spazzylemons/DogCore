@@ -2,12 +2,19 @@ package net.dumbdogdiner.dogcore.chat;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public final class MiscFormatter {
     private MiscFormatter() { }
+
+    /** A join configuration that uses commas, and "and" for the last separator. */
+    private static final JoinConfiguration JOIN_CONFIG =
+        JoinConfiguration.separators(Component.text(", "), Component.text(" and "));
 
     public static @NotNull Component formatCurrency(final long amount) {
         String name;
@@ -73,5 +80,9 @@ public final class MiscFormatter {
             }
         }
         return Component.text(String.join("", result.toArray(String[]::new)));
+    }
+
+    public static @NotNull Component playerCollection(final @NotNull Collection<Player> players) {
+        return Component.join(JOIN_CONFIG, players.stream().map(Player::displayName).toArray(Component[]::new));
     }
 }
