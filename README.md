@@ -1,6 +1,6 @@
 # DogCore
 
-A drop-in replacement for Essentials and other small plugins. Used on []Dumg Dog Diner](https://dumbdogdiner.net)
+A drop-in replacement for Essentials and other small plugins. Used on [Dumb Dog Diner](https://dumbdogdiner.net/)
 
 ## Features
 
