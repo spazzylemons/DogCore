@@ -13,15 +13,12 @@ import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import java.util.UUID;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class TpaManager implements Listener, Runnable, Configurable {
+public final class TpaManager implements Runnable, Configurable {
     private TpaManager() { }
 
     /** The time in which TPA expires. */
@@ -42,8 +39,6 @@ public final class TpaManager implements Listener, Runnable, Configurable {
         var instance = new TpaManager();
         // register the repeating maintenance task
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, instance, 0L, MAINTENANCE_TICKS);
-        // register event to remove players that leave
-        Bukkit.getPluginManager().registerEvents(instance, plugin);
         // register configurable
         Configuration.register(instance);
     }
@@ -161,7 +156,7 @@ public final class TpaManager implements Listener, Runnable, Configurable {
      * Remove a player from the TPA manager.
      * @param uuid User to remove.
      */
-    private static synchronized void removePlayer(@NotNull final UUID uuid) {
+    public static synchronized void removePlayer(@NotNull final UUID uuid) {
         Set<LinkedQueue.Node<TpaConnection>> edges;
         try {
             edges = requestNetwork.incidentEdges(uuid);
@@ -211,11 +206,6 @@ public final class TpaManager implements Listener, Runnable, Configurable {
         } else {
             from.sendMessage(Messages.get("commands.tpa.nothing"));
         }
-    }
-
-    @EventHandler
-    public void onPlayerQuit(final @NotNull PlayerQuitEvent event) {
-        removePlayer(event.getPlayer().getUniqueId());
     }
 
     @Override

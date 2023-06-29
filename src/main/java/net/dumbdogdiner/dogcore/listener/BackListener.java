@@ -1,6 +1,7 @@
-package net.dumbdogdiner.dogcore.teleport;
+package net.dumbdogdiner.dogcore.listener;
 
-import org.bukkit.Bukkit;
+import net.dumbdogdiner.dogcore.DogCorePlugin;
+import net.dumbdogdiner.dogcore.teleport.LocationDataType;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -9,41 +10,25 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Listens for teleport events and handles the player's saved /back location.
  * Data is stored persistently, meaning players can access /back between logins.
- * TODO: is that a good idea? couldn't it be abused?
  */
-public final class BackManager implements Listener {
-    private BackManager() { }
-
+public final class BackListener implements Listener {
     /** The key used to access the data. */
-    private static NamespacedKey lastLocationKey;
-
-    /** The string constant used for the key. */
-    private static final String LAST_LOCATION = "last-location";
-
-    /**
-     * Create a new back manager.
-     * @param plugin The plugin instance.
-     */
-    public static void init(@NotNull final Plugin plugin) {
-        lastLocationKey = new NamespacedKey(plugin, LAST_LOCATION);
-        Bukkit.getPluginManager().registerEvents(new BackManager(), plugin);
-    }
+    private static final NamespacedKey LAST_LOCATION = DogCorePlugin.key("last-location");
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerTeleport(@NotNull final PlayerTeleportEvent event) {
+    public void onPlayerTeleport(final @NotNull PlayerTeleportEvent event) {
         var player = event.getPlayer();
         switch (event.getCause()) {
             case PLUGIN, COMMAND -> {
                 var container = player.getPersistentDataContainer();
                 // store the last location in the container
-                container.set(lastLocationKey, LocationDataType.INSTANCE, event.getFrom());
+                container.set(LAST_LOCATION, LocationDataType.INSTANCE, event.getFrom());
             }
 
             default -> { }
@@ -51,10 +36,10 @@ public final class BackManager implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerDeath(@NotNull final PlayerDeathEvent event) {
+    public void onPlayerDeath(final @NotNull PlayerDeathEvent event) {
         var player = event.getPlayer();
         var container = player.getPersistentDataContainer();
-        container.set(lastLocationKey, LocationDataType.INSTANCE, player.getLocation());
+        container.set(LAST_LOCATION, LocationDataType.INSTANCE, player.getLocation());
     }
 
     /**
@@ -62,8 +47,8 @@ public final class BackManager implements Listener {
      * @param player The player.
      * @return The /back location, or null if none exists.
      */
-    public static @Nullable Location getBack(@NotNull final Player player) {
+    public static @Nullable Location getBack(final @NotNull Player player) {
         var container = player.getPersistentDataContainer();
-        return container.get(lastLocationKey, LocationDataType.INSTANCE);
+        return container.get(LAST_LOCATION, LocationDataType.INSTANCE);
     }
 }

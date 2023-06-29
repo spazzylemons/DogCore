@@ -14,20 +14,13 @@ import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
-import net.dumbdogdiner.dogcore.listener.CoreListener;
-import net.dumbdogdiner.dogcore.listener.DailyRewardListener;
-import net.dumbdogdiner.dogcore.listener.HatListener;
-import net.dumbdogdiner.dogcore.listener.MOTDListener;
-import net.dumbdogdiner.dogcore.listener.PlayerListNameListener;
-import net.dumbdogdiner.dogcore.listener.TabListManager;
-import net.dumbdogdiner.dogcore.teleport.BackManager;
-import net.dumbdogdiner.dogcore.listener.SpawnListener;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import net.dumbdogdiner.dogcore.teleport.TpaManager;
 import net.dumbdogdiner.dogcore.vault.DogEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +38,7 @@ public final class DogCorePlugin extends JavaPlugin {
         TeleportHelper.initSafeTeleport(this);
         Database.init();
         DeathMessageRandomizer.init(this);
-        BackManager.init(this);
         TpaManager.init(this);
-        TabListManager.init();
-        PlayerListNameListener.init();
 
         // remove commands that we replace
         CommandAPI.unregister("tell");
@@ -65,28 +55,29 @@ public final class DogCorePlugin extends JavaPlugin {
                     }
 
                     var name = entry.getName();
-                    if (name.startsWith("net/dumbdogdiner/dogcore/commands/")
-                        && name.endsWith(".class")
-                        && !name.contains("$")) {
-                        var className = name.substring(0, name.indexOf(".")).replaceAll("/", ".");
+                    if (!name.startsWith("net/dumbdogdiner/dogcore/") || !name.endsWith(".class")) {
+                        continue;
+                    }
+                    var className = name.substring(0, name.indexOf(".")).replaceAll("/", ".");
+                    if (name.startsWith("net/dumbdogdiner/dogcore/commands/") && !name.contains("$")) {
                         var clazz = getClassLoader().loadClass(className);
                         CommandAPI.registerCommand(clazz);
+                    } else if (name.startsWith("net/dumbdogdiner/dogcore/listener/")) {
+                        var clazz = getClassLoader().loadClass(className);
+                        if (Listener.class.isAssignableFrom(clazz)) {
+                            var listener = (Listener) clazz.getConstructor().newInstance();
+                            getServer().getPluginManager().registerEvents(listener, this);
+                        }
                     }
                 }
             }
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (ReflectiveOperationException | IOException e) {
             throw new RuntimeException(e);
         }
 
         AfkManager.init(this);
 
         NameFormatter.init(this);
-
-        getServer().getPluginManager().registerEvents(new CoreListener(), this);
-        getServer().getPluginManager().registerEvents(new DailyRewardListener(), this);
-        getServer().getPluginManager().registerEvents(new HatListener(), this);
-        getServer().getPluginManager().registerEvents(new MOTDListener(), this);
-        getServer().getPluginManager().registerEvents(new SpawnListener(), this);
 
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
             this,

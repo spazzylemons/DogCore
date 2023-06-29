@@ -17,8 +17,6 @@ import org.bukkit.scoreboard.RenderType;
 import org.jetbrains.annotations.NotNull;
 
 public final class PlayerListNameListener implements Listener {
-    private PlayerListNameListener() { }
-
     /** Every 10 seconds, update the pings in each player list entry. */
     private static final long PERIOD = 200L;
 
@@ -28,8 +26,7 @@ public final class PlayerListNameListener implements Listener {
     /** The scoreboard objective. */
     private static Objective pingObjective;
 
-    public static void init() {
-        Bukkit.getPluginManager().registerEvents(new PlayerListNameListener(), DogCorePlugin.getInstance());
+    static {
         Bukkit.getScheduler().runTaskTimer(DogCorePlugin.getInstance(), () -> {
             synchronized (PlayerListNameListener.class) {
                 for (var player : Bukkit.getOnlinePlayers()) {

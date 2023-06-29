@@ -13,8 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 
-public final class TabListManager implements Listener {
-    private TabListManager() { }
+public final class TabListListener implements Listener {
 
     /** The format of the header string. */
     private static String headerText;
@@ -25,11 +24,9 @@ public final class TabListManager implements Listener {
     /** Repeat every 10 seconds - update tab list displays. */
     private static final long TASK_PERIOD = 200L;
 
-    public static void init() {
-        Bukkit.getPluginManager().registerEvents(new TabListManager(), DogCorePlugin.getInstance());
-
+    static {
         Bukkit.getScheduler().runTaskTimer(DogCorePlugin.getInstance(), () -> {
-            synchronized (TabListManager.class) {
+            synchronized (TabListListener.class) {
                 for (var player : Bukkit.getOnlinePlayers()) {
                     sendTabList(player);
                 }
@@ -39,7 +36,7 @@ public final class TabListManager implements Listener {
         Configuration.register(() -> {
             var header = Configuration.getString("tablist.header");
             var footer = Configuration.getString("tablist.footer");
-            synchronized (TabListManager.class) {
+            synchronized (TabListListener.class) {
                 headerText = header;
                 footerText = footer;
             }

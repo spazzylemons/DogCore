@@ -10,7 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 
-public final class DailyRewardListener implements Configurable, Listener {
+public final class DailyRewardListener implements Listener, Configurable {
     /** Currently hardcoded, will be loaded from config - the amount to give to players. */
     private int reward;
 

@@ -15,7 +15,7 @@ public final class HatListener implements Listener {
     private static final int HELMET_SLOT = 39;
 
     @EventHandler
-    public void onThing(final @NotNull InventoryClickEvent event) {
+    public void onClick(final @NotNull InventoryClickEvent event) {
         if (!event.getWhoClicked().hasPermission(Permissions.HAT)) {
             return;
         }
