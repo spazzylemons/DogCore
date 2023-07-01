@@ -24,14 +24,64 @@ public final class Database {
      */
     private static final DSLContext CONTEXT;
 
+    private static @NotNull String getDatabaseUri() {
+        var database = Configuration.getString("db.database");
+        var port = Configuration.getInt("db.port");
+        try {
+            return new URI("jdbc:postgresql", null, "localhost", port, "/" + database, null, null).toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static @NotNull Connection connect() {
+        var username = Configuration.getString("db.username");
+        var password = Configuration.getString("db.password");
+        var uri = getDatabaseUri();
+
+        try {
+            return DriverManager.getConnection(uri, username, password);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static @NotNull DSLContext loadContext() {
+        var connection = connect();
+        DSLContext result = null;
+
+        try {
+            // don't autocommit - we are using transactions
+            connection.setAutoCommit(false);
+            // build DSL context
+            var context = DSL.using(connection, SQLDialect.POSTGRES);
+            // load the DDL
+            try (var resource = DogCorePlugin.getInstance().getResource("database.sql")) {
+                if (resource == null) {
+                    throw new RuntimeException("required database initialization file is missing from the plugin");
+                }
+                var query = new String(resource.readAllBytes());
+                context.execute(query);
+            }
+            result = context;
+        } catch (IOException | SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (result == null) {
+                try {
+                    connection.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+
+        return result;
+    }
+
     static {
         System.setProperty("org.jooq.no-logo", "true");
         System.setProperty("org.jooq.no-tips", "true");
-
-        var username = Configuration.getString("db.username");
-        var password = Configuration.getString("db.password");
-        var database = Configuration.getString("db.database");
-        var port = Configuration.getInt("db.port");
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -39,31 +89,7 @@ public final class Database {
             throw new RuntimeException(e);
         }
 
-        Connection conn;
-        String url;
-        try {
-            url = new URI("jdbc:postgresql", null, "localhost", port, "/" + database, null, null).toString();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            conn = DriverManager.getConnection(url, username, password);
-            conn.setAutoCommit(false);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        CONTEXT = DSL.using(conn, SQLDialect.POSTGRES);
-
-        try (var resource = DogCorePlugin.getInstance().getResource("database.sql")) {
-            if (resource == null) {
-                throw new RuntimeException("required database initialization file is missing from the plugin");
-            }
-            var query = new String(resource.readAllBytes());
-            CONTEXT.execute(query);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        CONTEXT = loadContext();
     }
 
     /**

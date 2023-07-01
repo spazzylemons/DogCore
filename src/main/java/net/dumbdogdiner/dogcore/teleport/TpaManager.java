@@ -5,7 +5,6 @@ import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
 import java.time.Duration;
 import java.util.Set;
-import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.messages.Messages;
 import net.dumbdogdiner.dogcore.task.TaskFrequency;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class TpaManager implements Configurable {
+public final class TpaManager {
     private TpaManager() { }
 
     /** The time in which TPA expires. */
@@ -35,8 +34,14 @@ public final class TpaManager implements Configurable {
     static {
         TaskManager.async(TaskFrequency.LOW, TpaManager::performMaintenance);
         // register configurable
-        var instance = new TpaManager();
-        Configuration.register(instance);
+        Configuration.register(() -> {
+            var expireMs = Duration.ofSeconds(Configuration.getInt("tpa.timeout")).toMillis();
+            synchronized (TpaManager.class) {
+                tpaExpireMs = expireMs;
+                requestNetwork = NetworkBuilder.directed().build();
+                timeoutQueue = new LinkedQueue<>();
+            }
+        });
     }
 
     private static synchronized LinkedQueue.@Nullable Node<TpaConnection> getEdge(
@@ -201,16 +206,6 @@ public final class TpaManager implements Configurable {
             to.sendMessage(Messages.get("commands.tpdeny"));
         } else {
             from.sendMessage(Messages.get("commands.tpa.nothing"));
-        }
-    }
-
-    @Override
-    public void loadConfig() {
-        var expireMs = Duration.ofSeconds(Configuration.getInt("tpa.timeout")).toMillis();
-        synchronized (TpaManager.class) {
-            tpaExpireMs = expireMs;
-            requestNetwork = NetworkBuilder.directed().build();
-            timeoutQueue = new LinkedQueue<>();
         }
     }
 }

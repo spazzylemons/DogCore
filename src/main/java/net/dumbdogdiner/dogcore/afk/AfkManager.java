@@ -3,7 +3,6 @@ package net.dumbdogdiner.dogcore.afk;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.event.AfkChangeEvent;
 import net.dumbdogdiner.dogcore.messages.Messages;
@@ -15,7 +14,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public final class AfkManager implements Configurable {
+public final class AfkManager {
     private AfkManager() { }
 
     /** The time it takes to turn AFK. */
@@ -33,8 +32,21 @@ public final class AfkManager implements Configurable {
     static {
         TaskManager.async(TaskFrequency.HIGH, AfkManager::autoAfk);
         // register configurable
-        var instance = new AfkManager();
-        Configuration.register(instance);
+        Configuration.register(() -> {
+            var time = Duration.ofSeconds(Configuration.getInt("afk.timeout")).toMillis();
+            synchronized (AfkManager.class) {
+                queue = new LinkedQueue<>();
+                for (var entry : STATES.entrySet()) {
+                    var value = entry.getValue();
+                    // this check prevents us from removing people from their AFK state when we reload config.
+                    if (value.timeoutNode() != null) {
+                        var node = queue.push(new AfkNode(entry.getKey()));
+                        entry.setValue(new AfkState(value.lastLocation(), node));
+                    }
+                }
+                afkMs = time;
+            }
+        });
     }
 
     public static synchronized boolean isAfk(final @NotNull Player player) {
@@ -129,20 +141,6 @@ public final class AfkManager implements Configurable {
                 }
             }
             return;
-        }
-    }
-
-    @Override
-    public void loadConfig() {
-        var time = Duration.ofSeconds(Configuration.getInt("afk.timeout")).toMillis();
-        synchronized (AfkManager.class) {
-            queue = new LinkedQueue<>();
-            for (var entry : STATES.entrySet()) {
-                var value = entry.getValue();
-                var node = queue.push(new AfkNode(entry.getKey()));
-                entry.setValue(new AfkState(value.lastLocation(), node));
-            }
-            afkMs = time;
         }
     }
 }

@@ -1,7 +1,6 @@
 package net.dumbdogdiner.dogcore.listener;
 
 import java.util.concurrent.CompletableFuture;
-import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.database.User;
 import net.dumbdogdiner.dogcore.event.DailyLoginEvent;
@@ -10,12 +9,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 
-public final class DailyRewardListener implements Listener, Configurable {
+public final class DailyRewardListener implements Listener {
     /** Currently hardcoded, will be loaded from config - the amount to give to players. */
-    private int reward;
+    private static int reward;
 
-    public DailyRewardListener() {
-        Configuration.register(this);
+    static {
+        Configuration.register(() -> {
+            synchronized (DailyRewardListener.class) {
+                reward = Configuration.getInt("daily.reward");
+            }
+        });
     }
 
     @EventHandler
@@ -24,15 +27,14 @@ public final class DailyRewardListener implements Listener, Configurable {
         User.lookup(player).thenCompose(user -> {
             if (user != null) {
                 player.sendMessage(Messages.get("chat.reward"));
-                return user.give(reward);
+                int r;
+                synchronized (DailyRewardListener.class) {
+                    r = reward;
+                }
+                return user.give(r);
             } else {
                 return CompletableFuture.completedFuture(null);
             }
         });
-    }
-
-    @Override
-    public void loadConfig() {
-        reward = Configuration.getInt("daily.reward");
     }
 }

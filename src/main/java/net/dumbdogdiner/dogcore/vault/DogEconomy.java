@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.database.User;
 import net.milkbowl.vault.economy.Economy;
@@ -13,7 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 @SuppressWarnings({"deprecation", "RedundantSuppression"})
-public final class DogEconomy implements Economy, Configurable {
+public final class DogEconomy implements Economy {
     /** The maximum amount stored for an account. */
     private static final long MAX_AMOUNT = 9007199254740992L;
 
@@ -24,7 +23,14 @@ public final class DogEconomy implements Economy, Configurable {
     private String pluralName;
 
     public DogEconomy() {
-        Configuration.register(this);
+        Configuration.register(() -> {
+            var singular = Configuration.getString("economy.singular");
+            var plural = Configuration.getString("economy.plural");
+            synchronized (this) {
+                singularName = singular;
+                pluralName = plural;
+            }
+        });
     }
 
     @Override
@@ -53,12 +59,12 @@ public final class DogEconomy implements Economy, Configurable {
     }
 
     @Override
-    public String currencyNamePlural() {
+    public synchronized String currencyNamePlural() {
         return pluralName;
     }
 
     @Override
-    public String currencyNameSingular() {
+    public synchronized String currencyNameSingular() {
         return singularName;
     }
 
@@ -309,13 +315,5 @@ public final class DogEconomy implements Economy, Configurable {
 
     private static EconomyResponse unimplemented() {
         return new EconomyResponse(0.0, 0.0, EconomyResponse.ResponseType.NOT_IMPLEMENTED, null);
-    }
-
-    @Override
-    public void loadConfig() {
-        var singular = Configuration.getString("economy.singular");
-        var plural = Configuration.getString("economy.plural");
-        singularName = singular;
-        pluralName = plural;
     }
 }

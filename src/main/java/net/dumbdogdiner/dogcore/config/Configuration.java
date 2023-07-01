@@ -9,19 +9,19 @@ import org.jetbrains.annotations.NotNull;
 public final class Configuration {
     private Configuration() { }
 
-    /** The set of configurables. */
-    private static final Set<Configurable> CONFIGURABLES = new HashSet<>();
+    /** The set of functions to run when the configuration is reloaded. */
+    private static final Set<Runnable> REGISTRATIONS = new HashSet<>();
 
     public static void load() {
         DogCorePlugin.getInstance().reloadConfig();
-        for (var cfg : CONFIGURABLES) {
-            cfg.loadConfig();
+        for (var cfg : REGISTRATIONS) {
+            cfg.run();
         }
     }
 
-    public static void register(final @NotNull Configurable configurable) {
-        CONFIGURABLES.add(configurable);
-        configurable.loadConfig();
+    public static void register(final @NotNull Runnable r) {
+        REGISTRATIONS.add(r);
+        r.run();
     }
 
     public static @NotNull String getString(final @NotNull String path) {
