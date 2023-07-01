@@ -1,15 +1,11 @@
 package net.dumbdogdiner.dogcore;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import dev.jorel.commandapi.CommandAPI;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.zip.ZipInputStream;
+import net.dumbdogdiner.dogcore.chat.SecureChatSpoofer;
 import net.dumbdogdiner.dogcore.vault.DogEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -64,18 +60,7 @@ public final class DogCorePlugin extends JavaPlugin {
             throw new RuntimeException(e);
         }
 
-        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
-            this,
-            ListenerPriority.NORMAL,
-            PacketType.Play.Server.SERVER_DATA
-        ) {
-            @Override
-            public void onPacketSending(final @NotNull PacketEvent event) {
-                var packet = event.getPacket();
-                // lie about secure chat, this hides the popup
-                packet.getBooleans().write(0, true);
-            }
-        });
+        SecureChatSpoofer.register();
 
         getLogger().info("doggy time");
     }
