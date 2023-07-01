@@ -1,5 +1,5 @@
 name: DogCore
-version: 1.0.0
+version: $VERSION
 main: net.dumbdogdiner.dogcore.DogCorePlugin
 description: Core plugin for Dumb Dog Diner
 author: spazzylemons

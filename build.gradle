@@ -67,6 +67,12 @@ jooq {
     }
 }
 
+processResources {
+    filesMatching("plugin.yml") {
+        filter { it.replace('$VERSION', version) }
+    }
+}
+
 checkstyle {
     // tell checkstyle to only check our source code, not the generated files
     checkstyleMain.source = 'src/main/java'
