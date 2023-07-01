@@ -519,9 +519,7 @@ public final class User {
         });
     }
 
-    public static void init() {
-        Configuration.register(() -> {
-            initialBalance = Configuration.getInt("economy.initial");
-        });
+    static {
+        Configuration.register(() -> initialBalance = Configuration.getInt("economy.initial"));
     }
 }

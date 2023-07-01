@@ -9,13 +9,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import net.dumbdogdiner.dogcore.DogCorePlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
@@ -81,12 +81,8 @@ public final class TeleportHelper {
      */
     private static final Map<String, Material> MATERIAL_MAP = new HashMap<>();
 
-    private static void parseMaterialList(
-        final @NotNull JavaPlugin plugin,
-        final @NotNull String filename,
-        final @NotNull Set<Material> set
-    ) {
-        try (var resource = plugin.getResource(filename)) {
+    private static void parseMaterialList(final @NotNull String filename, final @NotNull Set<Material> set) {
+        try (var resource = DogCorePlugin.getInstance().getResource(filename)) {
             if (resource == null) {
                 throw new RuntimeException("Missing safe teleport resource " + filename);
             }
@@ -114,19 +110,15 @@ public final class TeleportHelper {
         }
     }
 
-    /**
-     * Initialize the safe teleport system.
-     * @param plugin The plugin.
-     */
-    public static void initSafeTeleport(final @NotNull JavaPlugin plugin) {
+    static {
         for (var mat : Material.values()) {
             if (!mat.isLegacy()) {
                 // only consider if not legacy
                 MATERIAL_MAP.put(mat.name(), mat);
             }
         }
-        parseMaterialList(plugin, "safe_blocks.txt", SAFE_TO_STAND_ON);
-        parseMaterialList(plugin, "harmful_passable.txt", HARMFUL_PASSABLE);
+        parseMaterialList("safe_blocks.txt", SAFE_TO_STAND_ON);
+        parseMaterialList("harmful_passable.txt", HARMFUL_PASSABLE);
         MATERIAL_MAP.clear();
     }
 

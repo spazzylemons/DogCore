@@ -22,12 +22,9 @@ public final class Database {
     /**
      * The database context.
      */
-    private static DSLContext create;
+    private static final DSLContext CONTEXT;
 
-    /**
-     * Initialize the database.
-     */
-    public static void init() {
+    static {
         System.setProperty("org.jooq.no-logo", "true");
         System.setProperty("org.jooq.no-tips", "true");
 
@@ -56,19 +53,17 @@ public final class Database {
             throw new RuntimeException(e);
         }
 
-        create = DSL.using(conn, SQLDialect.POSTGRES);
+        CONTEXT = DSL.using(conn, SQLDialect.POSTGRES);
 
         try (var resource = DogCorePlugin.getInstance().getResource("database.sql")) {
             if (resource == null) {
                 throw new RuntimeException("required database initialization file is missing from the plugin");
             }
             var query = new String(resource.readAllBytes());
-            create.execute(query);
+            CONTEXT.execute(query);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        User.init();
     }
 
     /**
@@ -78,7 +73,7 @@ public final class Database {
      * @param <T> The type of value to return.
      */
     public static <T> @NotNull CompletionStage<T> execute(final @NotNull TransactionalCallable<T> f) {
-        return create.transactionResultAsync(f);
+        return CONTEXT.transactionResultAsync(f);
     }
 
     /**
@@ -87,6 +82,6 @@ public final class Database {
      * @return A future that completes when the transaction is finished.
      */
     public static @NotNull CompletionStage<Void> executeUpdate(final @NotNull TransactionalRunnable f) {
-        return create.transactionAsync(f);
+        return CONTEXT.transactionAsync(f);
     }
 }

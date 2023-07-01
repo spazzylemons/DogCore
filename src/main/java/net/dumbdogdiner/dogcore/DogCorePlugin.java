@@ -10,10 +10,6 @@ import dev.jorel.commandapi.CommandAPI;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.zip.ZipInputStream;
-import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
-import net.dumbdogdiner.dogcore.chat.NameFormatter;
-import net.dumbdogdiner.dogcore.database.Database;
-import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
 import net.dumbdogdiner.dogcore.vault.DogEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -31,18 +27,14 @@ public final class DogCorePlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        // register our economy implementation
         Bukkit.getServicesManager().register(Economy.class, new DogEconomy(), this, ServicePriority.Highest);
-
-        TeleportHelper.initSafeTeleport(this);
-        Database.init();
-        DeathMessageRandomizer.init(this);
-
         // remove commands that we replace
         CommandAPI.unregister("tell");
         CommandAPI.unregister("msg");
         CommandAPI.unregister("w");
         CommandAPI.unregister("me");
-
+        // reflection trickery to register commands and listeners
         try (var stream = new FileInputStream(getFile())) {
             try (var zip = new ZipInputStream(stream)) {
                 for (;;) {
@@ -71,8 +63,6 @@ public final class DogCorePlugin extends JavaPlugin {
         } catch (ReflectiveOperationException | IOException e) {
             throw new RuntimeException(e);
         }
-
-        NameFormatter.init(this);
 
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
             this,

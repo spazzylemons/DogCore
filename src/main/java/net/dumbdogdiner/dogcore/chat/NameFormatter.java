@@ -3,6 +3,7 @@ package net.dumbdogdiner.dogcore.chat;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.dumbdogdiner.dogcore.event.DisplayNameChangeEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -14,25 +15,22 @@ import net.luckperms.api.event.group.GroupDataRecalculateEvent;
 import net.luckperms.api.model.user.User;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("resource")
 public final class NameFormatter {
     private NameFormatter() { }
 
     /** The LuckPerms instance. */
     private static final LuckPerms LUCKPERMS = LuckPermsProvider.get();
 
-    @SuppressWarnings("resource")
-    public static void init(@NotNull final JavaPlugin plugin) {
-        LUCKPERMS.getEventBus().subscribe(plugin, GroupDataRecalculateEvent.class, event -> {
-            var onlinePlayers = Bukkit.getOnlinePlayers();
-            var futures = new CompletableFuture[onlinePlayers.size()];
-            var i = 0;
-            for (var player : onlinePlayers) {
-                futures[i++] = refreshPlayerName(player).toCompletableFuture();
-            }
+    static {
+        LUCKPERMS.getEventBus().subscribe(DogCorePlugin.getInstance(), GroupDataRecalculateEvent.class, event -> {
+            var futures = Bukkit.getOnlinePlayers()
+                .stream()
+                .map(player -> refreshPlayerName(player).toCompletableFuture())
+                .toArray(CompletableFuture[]::new);
             CompletableFuture.allOf(futures).join();
         });
     }

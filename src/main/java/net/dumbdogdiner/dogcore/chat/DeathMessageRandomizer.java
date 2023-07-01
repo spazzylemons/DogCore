@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -12,7 +13,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +29,8 @@ public final class DeathMessageRandomizer {
     /** The filename of the death messages resource. */
     private static final String FILE = "death.yml";
 
-    /**
-     * Initialize the death message randomizer.
-     * @param plugin The plugin to load messages from.
-     */
-    public static void init(@NotNull final JavaPlugin plugin) {
+    static {
+        var plugin = DogCorePlugin.getInstance();
         var file = new File(plugin.getDataFolder(), FILE);
         if (!file.exists()) {
             plugin.saveResource(FILE, false);
