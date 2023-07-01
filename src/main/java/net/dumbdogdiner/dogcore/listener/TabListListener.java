@@ -1,7 +1,8 @@
 package net.dumbdogdiner.dogcore.listener;
 
-import net.dumbdogdiner.dogcore.DogCorePlugin;
 import net.dumbdogdiner.dogcore.config.Configuration;
+import net.dumbdogdiner.dogcore.task.TaskFrequency;
+import net.dumbdogdiner.dogcore.task.TaskManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -21,17 +22,8 @@ public final class TabListListener implements Listener {
     /** The format of the footer string. */
     private static String footerText;
 
-    /** Repeat every 10 seconds - update tab list displays. */
-    private static final long TASK_PERIOD = 200L;
-
     static {
-        Bukkit.getScheduler().runTaskTimer(DogCorePlugin.getInstance(), () -> {
-            synchronized (TabListListener.class) {
-                for (var player : Bukkit.getOnlinePlayers()) {
-                    sendTabList(player);
-                }
-            }
-        }, 0L, TASK_PERIOD);
+        TaskManager.players(TaskFrequency.LOW, TabListListener.class, TabListListener::sendTabList);
 
         Configuration.register(() -> {
             var header = Configuration.getString("tablist.header");

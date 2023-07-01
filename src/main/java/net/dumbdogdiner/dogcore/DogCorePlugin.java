@@ -10,12 +10,10 @@ import dev.jorel.commandapi.CommandAPI;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.zip.ZipInputStream;
-import net.dumbdogdiner.dogcore.afk.AfkManager;
 import net.dumbdogdiner.dogcore.chat.DeathMessageRandomizer;
 import net.dumbdogdiner.dogcore.chat.NameFormatter;
 import net.dumbdogdiner.dogcore.database.Database;
 import net.dumbdogdiner.dogcore.teleport.TeleportHelper;
-import net.dumbdogdiner.dogcore.teleport.TpaManager;
 import net.dumbdogdiner.dogcore.vault.DogEconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -38,7 +36,6 @@ public final class DogCorePlugin extends JavaPlugin {
         TeleportHelper.initSafeTeleport(this);
         Database.init();
         DeathMessageRandomizer.init(this);
-        TpaManager.init(this);
 
         // remove commands that we replace
         CommandAPI.unregister("tell");
@@ -74,8 +71,6 @@ public final class DogCorePlugin extends JavaPlugin {
         } catch (ReflectiveOperationException | IOException e) {
             throw new RuntimeException(e);
         }
-
-        AfkManager.init(this);
 
         NameFormatter.init(this);
 

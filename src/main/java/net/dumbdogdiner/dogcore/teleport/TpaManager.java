@@ -8,24 +8,21 @@ import java.util.Set;
 import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.messages.Messages;
+import net.dumbdogdiner.dogcore.task.TaskFrequency;
+import net.dumbdogdiner.dogcore.task.TaskManager;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import net.kyori.adventure.text.event.ClickEvent;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import java.util.UUID;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class TpaManager implements Runnable, Configurable {
+public final class TpaManager implements Configurable {
     private TpaManager() { }
 
     /** The time in which TPA expires. */
     private static long tpaExpireMs;
-
-    /** The time to repeat the maintenance task (Every minute). */
-    private static final long MAINTENANCE_TICKS = 20L * 60L;
 
     private record TpaConnection(boolean here, long time) { }
 
@@ -35,11 +32,10 @@ public final class TpaManager implements Runnable, Configurable {
     /** The head of the TPA timeout queue. */
     private static LinkedQueue<TpaConnection> timeoutQueue;
 
-    public static void init(final @NotNull Plugin plugin) {
-        var instance = new TpaManager();
-        // register the repeating maintenance task
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, instance, 0L, MAINTENANCE_TICKS);
+    static {
+        TaskManager.async(TaskFrequency.LOW, TpaManager::performMaintenance);
         // register configurable
+        var instance = new TpaManager();
         Configuration.register(instance);
     }
 
@@ -206,12 +202,6 @@ public final class TpaManager implements Runnable, Configurable {
         } else {
             from.sendMessage(Messages.get("commands.tpa.nothing"));
         }
-    }
-
-    @Override
-    public void run() {
-        // When the TPA manager is ticked, we will perform maintenance on the network and queue.
-        performMaintenance();
     }
 
     @Override

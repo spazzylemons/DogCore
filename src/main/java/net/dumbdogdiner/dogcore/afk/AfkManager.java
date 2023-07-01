@@ -7,14 +7,15 @@ import net.dumbdogdiner.dogcore.config.Configurable;
 import net.dumbdogdiner.dogcore.config.Configuration;
 import net.dumbdogdiner.dogcore.event.AfkChangeEvent;
 import net.dumbdogdiner.dogcore.messages.Messages;
+import net.dumbdogdiner.dogcore.task.TaskFrequency;
+import net.dumbdogdiner.dogcore.task.TaskManager;
 import net.dumbdogdiner.dogcore.util.LinkedQueue;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class AfkManager implements Runnable, Configurable {
+public final class AfkManager implements Configurable {
     private AfkManager() { }
 
     /** The time it takes to turn AFK. */
@@ -23,21 +24,16 @@ public final class AfkManager implements Runnable, Configurable {
     /** The distance squared needed to move to not be marked AFK. */
     public static final double MIN_DIST_SQUARED = 16.0;
 
-    /** Ticks in a second. */
-    private static final int TPS = 20;
-
     /** The AFK states for each player. */
     private static final Map<@NotNull Player, @NotNull AfkState> STATES = new HashMap<>();
 
     /** The queue of non-AFK players. */
     private static LinkedQueue<@NotNull AfkNode> queue;
 
-    public static void init(final @NotNull Plugin plugin) {
-        // create an instance for events
-        var instance = new AfkManager();
-        // establish a repeating task to query the player list
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, instance, 0, TPS);
+    static {
+        TaskManager.async(TaskFrequency.HIGH, AfkManager::autoAfk);
         // register configurable
+        var instance = new AfkManager();
         Configuration.register(instance);
     }
 
@@ -121,21 +117,18 @@ public final class AfkManager implements Runnable, Configurable {
     /**
      * Check for players to automatically set as AFK.
      */
-    @Override
-    public void run() {
+    public static synchronized void autoAfk() {
         var now = System.currentTimeMillis();
-        synchronized (AfkManager.class) {
-            while (true) {
-                var node = queue.peek();
-                if (node != null) {
-                    var value = node.getValue();
-                    if (value.time() + afkMs < now) {
-                        setAfk(value.player(), true);
-                        continue;
-                    }
+        while (true) {
+            var node = queue.peek();
+            if (node != null) {
+                var value = node.getValue();
+                if (value.time() + afkMs < now) {
+                    setAfk(value.player(), true);
+                    continue;
                 }
-                return;
             }
+            return;
         }
     }
 
